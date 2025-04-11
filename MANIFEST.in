@@ -1,0 +1,5 @@
+include README.md
+include wormcat3/extdata/ORF_only_v2_nov-11-2021.csv
+include wormcat3/extdata/ahringer_v2_nov-11-2021.csv
+include wormcat3/extdata/orfeome_v2_nov-11-2021.csv
+include wormcat3/extdata/whole_genome_v2_nov-11-2021.csv

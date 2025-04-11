@@ -4,7 +4,8 @@ __pycache__/
 *$py.class
 
 wormcat_out/
-
+dist/
+wormcat3.egg-info/
 
 # Jupyter Notebook
 .ipynb_checkpoints
