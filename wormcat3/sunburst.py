@@ -5,7 +5,7 @@ import json
 import os
 import pandas as pd
 from pathlib import Path
-from .sunburst_template import sunburst_template_front, sunburst_template_back
+from wormcat3.sunburst_template import sunburst_template_front, sunburst_template_back
 
 
 def _read_input_annotations(file_nm_in):

@@ -1,7 +1,5 @@
-import os
-from pathlib import Path
 import pandas as pd
-from . import file_util
+from wormcat3 import file_util
 
 class AnnotationsManager:
     """Manages gene annotations and preprocessing."""
