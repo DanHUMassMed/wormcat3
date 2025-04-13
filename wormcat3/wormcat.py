@@ -1,8 +1,14 @@
+import os
+import pandas as pd
+from pathlib import Path
+from typing import Union, List, Dict
 from wormcat3 import file_util
 from wormcat3.annotations_manger import AnnotationsManager
-from wormcat3.statistical_analysis import EnrichmentAnalyzer, PAdjustMethod
-from pathlib import Path
-from typing import Union
+from wormcat3.statistical_analysis import EnrichmentAnalyzer
+from wormcat3.constants import PAdjustMethod
+from wormcat3.bubble_chart import create_bubble_chart
+from wormcat3.sunburst import create_sunburst
+import wormcat3.constants as cs
 
 class Wormcat:
     """
@@ -10,27 +16,27 @@ class Wormcat:
     and statistical analysis for gene enrichment.
     """
     
-    def __init__(self, working_dir_path="./wormcat_out", annotation_file_name="whole_genome_v2_nov-11-2021.csv"):
+    def __init__(self, working_dir_path=cs.DEFAULT_WORKING_DIR_PATH, run_prefix=cs.DEFAULT_RUN_PREFIX, annotation_file_name=cs.DEFAULT_ANNOTATION_FILE_NAME):
         """Initialize Wormcat with working directory and annotation file."""
         
         ### Create the working directory 
-        self.run_number = file_util.generate_5_digit_hash(prefix="run_")
+        self.run_number = file_util.generate_5_digit_hash(prefix=run_prefix + "_")
         working_dir_path = Path(working_dir_path) / self.run_number
         self.working_dir_path = file_util.validate_directory_path(working_dir_path)
         
         # Setup annotation manager
         self.annotation_manager = AnnotationsManager(annotation_file_name)
-        
 
-    
+
     def enrichment_test(
             self, 
             gene_set_input: Union[str, list], 
             background_input: Union[str, list] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
-            p_adjust_threshold = 0.01
-        ):
+            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD
+            
+        )-> List[Dict[str, pd.DataFrame]]:
         """Perform enrichment test on the gene set."""
         
         if isinstance(gene_set_input, str):
@@ -95,5 +101,21 @@ class Wormcat:
             p_adjust_threshold=p_adjust_threshold
         )
 
-
+    def test_and_chart(self,
+            gene_set_input: Union[str, list], 
+            background_input: Union[str, list] = None, 
+            *, 
+            p_adjust_method = PAdjustMethod.BONFERRONI, 
+            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
+        
+        test_results = self.enrichment_test(gene_set_input, background_input, p_adjust_method=p_adjust_method, p_adjust_threshold=p_adjust_threshold)
+        for test_result in test_results:  # each d is a dict with one item
+            result_file_path, result_df = next(iter(test_result.items()))
+            data_file_nm = os.path.basename(result_file_path)
+            base_dir_path = os.path.dirname(result_file_path)
+            plot_title = data_file_nm[:-10]
+            create_bubble_chart(base_dir_path, data_file_nm, plot_title = plot_title)
+            
+        run_number = os.path.basename(base_dir_path)
+        create_sunburst(base_dir_path,run_number)
     

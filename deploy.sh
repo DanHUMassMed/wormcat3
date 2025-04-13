@@ -1,7 +1,9 @@
 #!/bin/bash
 
+VERSION_FILE="wormcat3/__init__.py"  # Add this line
+
 # Get current version
-VERSION=$(grep "__version__" wormcat3/__init__.py | cut -d'"' -f2)
+VERSION=$(grep "__version__" $VERSION_FILE | cut -d'"' -f2)
 
 IFS='.' read -r -a PARTS <<< "$VERSION"
 MAJOR=${PARTS[0]}
@@ -14,7 +16,7 @@ NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
 echo "Bumping version: $VERSION → $NEW_VERSION"
 
 # Update __init__.py
-sed -i '' "s/__version__ = .*/__version__ = \"$NEW_VERSION\"/" wormcat3/__init__.py
+sed -i '' "s/__version__ = .*/__version__ = \"$NEW_VERSION\"/" $VERSION_FILE
 
 
 rm -rf ./dist
@@ -28,6 +30,14 @@ echo "$CHECK_OUTPUT"
 if echo "$CHECK_OUTPUT" | grep -q "PASSED"; then
     echo "Twine check passed, uploading to PyPI..."
     twine upload --repository pypi dist/*
+
+        # Git commit, tag, and push
+    git add "$VERSION_FILE"
+    git commit -m "Bump version to $NEW_VERSION"
+    git tag "v$NEW_VERSION"
+    git push
+    git push --tags
+
 else
     echo "Twine check failed..."
     exit 1

@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 import re
 
-def validate_directory_path(directory_path):
+def validate_directory_path(directory_path, not_empty_check = True):
     """
     Ensure the directory exists and is empty or can be created.
     Returns the validated path.
@@ -11,7 +11,7 @@ def validate_directory_path(directory_path):
     path = Path(directory_path)
     if path.exists():
         if path.is_dir():
-            if any(path.iterdir()):  # Directory is not empty
+            if not_empty_check and any(path.iterdir()):  # Directory is not empty
                 raise ValueError(f"The directory '{path}' exists and is not empty.")
         else:
             raise ValueError(f"The path '{path}' exists and is not a directory.")

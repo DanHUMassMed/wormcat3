@@ -1,10 +1,12 @@
 import pandas as pd
+import os
 from wormcat3 import file_util
+import wormcat3.constants as cs
 
 class AnnotationsManager:
     """Manages gene annotations and preprocessing."""
     
-    def __init__(self, annotation_file):
+    def __init__(self, annotation_file=cs.DEFAULT_ANNOTATION_FILE_NAME):
         """Initialize with the path to the annotation file."""
         if file_util.is_file_path(annotation_file):
             self.annotation_file_path = annotation_file
@@ -84,3 +86,96 @@ class AnnotationsManager:
         background_not_matched_df = background_not_matched_df[[gene_type]]
 
         return background_available_df, background_not_matched_df
+
+    def create_gmt_for_annotations(self, output_dir_path, output_file_nm_prefix="wormcat"):
+       file_util.validate_directory_path(output_dir_path, not_empty_check = False) 
+       for category in [1,2,3]:
+            category_col = f"Category.{category}"
+            gene_col = "Wormbase.ID"
+            id_col="Function.ID"
+            
+        
+            category_df = self.annotations_df[[gene_col, category_col]]
+            category_df = category_df.rename(columns={category_col: id_col})
+            category_df['Description'] = category_df[id_col]            
+            output_file_path = f"{output_dir_path}/{output_file_nm_prefix}_cat_{category}.gmt"
+            self.convert_dataframe_to_gmt(category_df, output_file_path, id_col = id_col, desc_col = None, gene_col = gene_col)
+
+    
+    @staticmethod
+    def convert_dataframe_to_gmt(category_df, output_file_path='wormcat', id_col='Function.ID', 
+                                desc_col=None, gene_col='Wormbase.ID'):
+        """
+        Convert a pandas DataFrame to GMT file format.
+        
+        """
+        
+        # Ensure the output directory exists
+        output_dir = os.path.dirname(output_file_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
+        # Validate that required columns exist
+        required_cols = [id_col, gene_col]
+        if desc_col is not None:
+            required_cols.append(desc_col)
+        
+        missing_cols = [col for col in required_cols if col not in category_df.columns]
+        if missing_cols:
+            raise ValueError(f"Missing required columns: {', '.join(missing_cols)}")
+        
+        # Assert ID column has NaN values
+        assert not category_df[id_col].isna().any(), f"Column '{id_col}' contains NaN values"
+        
+        # Group by required columns
+        if desc_col is not None:
+            # Use description column if provided
+            grouped = category_df.groupby([id_col, desc_col])[gene_col].apply(list).reset_index()
+            # Count unique gene sets
+            num_gene_sets = len(category_df[[id_col, desc_col]].drop_duplicates())
+        else:
+            # Use ID column as description if desc_col is None
+            grouped = category_df.groupby([id_col])[gene_col].apply(list).reset_index()
+            # Add ID column as description column
+            grouped[id_col + '_desc'] = grouped[id_col]
+            desc_col = id_col + '_desc'
+            # Count unique gene sets
+            num_gene_sets = len(category_df[id_col].drop_duplicates())
+        
+        # Assert there's at least one gene set
+        assert len(grouped) > 0, "No gene sets found after grouping"
+        
+        # Count total genes before filtering
+        total_genes = sum(len(genes) for genes in grouped[gene_col])
+        
+        # Write to GMT file
+        gene_sets_written = 0
+        genes_written = 0
+        
+        with open(output_file_path, 'w') as file:
+            for _, row in grouped.iterrows():
+                # Handle potential NaN values in the description
+                description = row[desc_col] if pd.notna(row[desc_col]) else row[id_col]
+                
+                # Filter out any None or NaN values from gene list
+                gene_list = [str(gene) for gene in row[gene_col] if pd.notna(gene)]
+                
+                # Only write if there are genes in the set
+                if gene_list:
+                    line = f"{row[id_col]}\t{description}\t" + '\t'.join(gene_list) + '\n'
+                    file.write(line)
+                    gene_sets_written += 1
+                    genes_written += len(gene_list)
+        
+        # Final assertions to ensure data was written
+        assert gene_sets_written > 0, "No gene sets were written to the output file"
+        assert os.path.exists(output_file_path), f"Output file {output_file_path} was not created"
+        assert os.path.getsize(output_file_path) > 0, f"Output file {output_file_path} is empty"
+        
+        print(f"Successfully created GMT file: {output_file_path}")
+        print(f"Processed {num_gene_sets:,} gene sets, wrote {gene_sets_written:,} sets with at least one gene")
+        print(f"Total genes in input: {total_genes:,}, total genes written: {genes_written:,}")
+        print()
+        return output_file_path
+
+    

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from plotnine import *
 from pathlib import Path
+import wormcat3.constants as cs
 import warnings
 
 # Suppress UserWarnings and DeprecationWarnings from plotnine
@@ -39,7 +40,8 @@ def preprocess_bubble_data(data_file_path):
         # bubbles_data = pd.concat([bubbles_data, calibration_points], ignore_index=True)
         
         # Compute normalized value as a placeholder
-        bubbles_data['bubbles_z'] = round(0.001 * (bubbles_data['PValue'] - bubbles_data['PValue'].mean()) / bubbles_data['PValue'].std(), 2)
+        scale_for_visualization=0.001
+        bubbles_data['bubbles_z'] = round(scale_for_visualization * (bubbles_data['PValue'] - bubbles_data['PValue'].mean()) / bubbles_data['PValue'].std(), 2)
         
         # Create color coding based on Bonferroni-corrected p-values
         conditions = [     
@@ -128,15 +130,10 @@ def order_categories_by_column(df, category_column='Category', order_by_column='
     
     return df
     
-def generate_bubble_plot(df, svg_file_path, plot_title="RGS"):
+def generate_bubble_plot(df, svg_file_path, plot_title=cs.DEFAULT_TITLE, width=cs.DEFAULT_WIDTH, height=cs.DEFAULT_HEIGHT):
     """
     Generate and save a bubble plot as an SVG using plotnine.
 
-    Args:
-        df (pd.DataFrame): Input dataframe with columns 'Category', 'bubbles_z',
-                            'RGS_size' (size labels), and 'p_value_type' (color labels).
-        output_file_name (str): Name for the output SVG file.
-        plot_title (str): Title of the plot.
     """
     if df is None or df.empty:
         raise ValueError("DataFrame is empty or None")
@@ -206,8 +203,7 @@ def generate_bubble_plot(df, svg_file_path, plot_title="RGS"):
     )
 
     try:
-        # Save plot
-        p.save(filename=svg_file_path, format="svg", width=6, height=5.5)
+        p.save(filename=svg_file_path, format = "svg", width = width, height = height)
         print(f"Saved plot to: {svg_file_path}")
     except Exception as e:
         raise IOError(f"Failed to save plot: {e}")
@@ -227,8 +223,8 @@ def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS") -> N
 
 
 if __name__ == "__main__":
-    dir_path="/Users/dan/Code/Python/wormcat3/notebooks/wormcat_out/run_49048"
-    data_file_nm= "category_2_padj_bon_run_49048.csv"
+    dir_path="/Users/dan/Code/Python/wormcat3/notebooks/wormcat_out/EC-ES-UP_73980"
+    data_file_nm= "category_2_padj_bon_EC-ES-UP_73980.csv"
 
     create_bubble_chart(dir_path, data_file_nm, plot_title="Category 2 Up")
     

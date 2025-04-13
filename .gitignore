@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.gmt
+
 wormcat_out/
 dist/
 wormcat3.egg-info/

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy  as np
 import os
 from typing import Union, Dict, List
+import wormcat3.constants as cs
 
 
 class GSEAAnalyzer:
@@ -10,7 +11,7 @@ class GSEAAnalyzer:
     A class to perform and manage Gene Set Enrichment Analysis (GSEA) using gseapy.
     """
     
-    def __init__(self, output_dir: str = 'gsea_results'):
+    def __init__(self, output_dir: str = cs.DEFAULT_GSEA_RESULTS_DIR):
         """
         Initialize the GSEAAnalyzer.
         

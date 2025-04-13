@@ -2,12 +2,8 @@ from pathlib import Path
 import pandas as pd
 from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
-from enum import Enum
-
-# Enum for p-value adjustment methods
-class PAdjustMethod(Enum):
-    BONFERRONI = 'bonferroni'
-    FDR = 'fdr_bh'
+import wormcat3.constants as cs
+from wormcat3.constants import PAdjustMethod
     
 class EnrichmentAnalyzer:
     """Performs statistical enrichment analysis."""
@@ -111,13 +107,15 @@ class EnrichmentAnalyzer:
         fisher_cat_adjusted_df[padj_col] = corrected_pvals
         
         # Filter by threshold
+        print(f"{threshold=}")
         fisher_cat_adjusted_df = fisher_cat_adjusted_df[fisher_cat_adjusted_df[padj_col] < threshold]
         
         # Save results
-        file_path = Path(self.output_dir) / f"category_{category}_padj_{method[:3]}_{self.run_number}.csv"
-        fisher_cat_adjusted_df.to_csv(file_path, index=False)
+        output_file_path = Path(self.output_dir) / f"category_{category}_padj_{method[:3]}_{self.run_number}.csv"
+        fisher_cat_adjusted_df.to_csv(output_file_path, index=False)
         
-        return fisher_cat_adjusted_df
+        return {output_file_path: fisher_cat_adjusted_df}
+    
     
     @staticmethod
     def _create_contingency(genes_in_both, gene_set_size, category_size, background_size):
