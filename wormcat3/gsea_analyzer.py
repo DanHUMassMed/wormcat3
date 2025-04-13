@@ -2,8 +2,10 @@ import gseapy as gp
 import pandas as pd
 import numpy  as np
 import os
+from pathlib import Path
 from typing import Union, Dict, List
 import wormcat3.constants as cs
+from wormcat3 import file_util
 
 
 class GSEAAnalyzer:
@@ -31,14 +33,16 @@ class GSEAAnalyzer:
     
     def run_preranked_gsea(self, 
                            ranked_genes: Union[str, pd.DataFrame], 
-                           gene_sets: Union[str, Dict], 
+                           gene_sets: Union[str, Dict],
+                           output_dir: str,
+                           *,
                            min_size: int = 15, 
                            max_size: int = 500,
                            permutation_num: int = 1000, 
-                           weighted_score_type: int = 1,
+                           weight: float = 1.0,
                            seed: int = 123, 
-                           processes: int = 4,
-                           verbose: bool = True) -> pd.DataFrame:
+                           threads: int = 4,
+                           verbose: bool = False) -> pd.DataFrame:
         """
         Perform pre-ranked GSEA analysis and return results as a DataFrame.
         
@@ -86,21 +90,24 @@ class GSEAAnalyzer:
             if not required_columns.issubset(ranked_genes.columns):
                 raise ValueError(f"ranked_genes DataFrame must contain columns: {required_columns}")
         
+        outdir = file_util.validate_directory_path(Path(self.output_dir)/output_dir)
+        
         try:
             # Run pre-ranked GSEA
+            print("Before gp.prerank")
             prerank_results = gp.prerank(
-                rnk=ranked_genes,
-                gene_sets=gene_sets,
-                outdir=self.output_dir,
-                min_size=min_size,
-                max_size=max_size,
-                permutation_num=permutation_num,
-                weighted_score_type=weighted_score_type,
-                seed=seed,
-                processes=processes,
-                verbose=verbose
+                rnk = ranked_genes,
+                gene_sets = gene_sets,
+                outdir = outdir,
+                min_size = min_size,
+                max_size = max_size,
+                permutation_num = permutation_num,
+                weight = weight,
+                seed = seed,
+                threads = threads,
+                verbose = verbose
             )
-            
+            print("After gp.prerank")
             # Store the full results object
             self.results = prerank_results
             
@@ -257,102 +264,187 @@ class GSEAAnalyzer:
         # Sort the DataFrame by ranking score in descending order
         ranked_list = deseq2_copy[['Gene', 'Rank']].sort_values(by='Rank', ascending=False)
         
+        ranked_list = GSEAAnalyzer._make_ranks_unique(ranked_list)
+        
+        #######
+        # Check for duplicates in the 'Gene' column
+        duplicate_genes = ranked_list[ranked_list['Gene'].duplicated(keep=False)]
+
+        # Print any duplicates found
+        if not duplicate_genes.empty:
+            print(f"Found {len(duplicate_genes['Gene'].unique())} genes with duplicates:")
+            print(duplicate_genes.sort_values(by='Gene'))
+            
+            # Count total percentage of duplicated genes
+            duplicate_percent = (len(duplicate_genes) / len(ranked_list)) * 100
+            print(f"Duplicated genes represent {duplicate_percent:.2f}% of the dataset")
+        else:
+            print("No duplicate genes found in the ranked list.")
+
+        # Remove duplicates, keeping the entry with the highest rank for each gene
+        # Since the list is already sorted by Rank (descending), we keep the first occurrence
+        ranked_list_no_duplicates = ranked_list.drop_duplicates(subset='Gene', keep='first')
+
+        # Verify duplicates were removed
+        assert ranked_list_no_duplicates['Gene'].duplicated().sum() == 0, "Duplicates still exist!"
+
+        #######
+        
         # Final validation of output
         assert ranked_list.shape[0] == deseq2_copy.shape[0], "Output has different number of rows than input"
         
         return ranked_list
-    
-def convert_dataframe_to_gmt(input_df, output_file='output.gmt', id_col='Function.ID', 
-                            desc_col=None, gene_col='Wormbase.ID'):
-    """
-    Convert a pandas DataFrame to GMT file format.
-    
-    Parameters:
-    -----------
-    input_df : pandas.DataFrame
-        Input DataFrame containing gene set information
-    output_file : str
-        Path to output GMT file
-    id_col : str
-        Column name for the gene set ID (also used as description if desc_col is None)
-    desc_col : str or None
-        Column name for the gene set description (if None, id_col will be used instead)
-    gene_col : str
-        Column name for the gene identifiers
-    
-    Returns:
-    --------
-    str
-        Path to the created GMT file
-    """
-    # Assert input is a DataFrame
-    assert isinstance(input_df, pd.DataFrame), "Input must be a pandas DataFrame"
-    assert not input_df.empty, "Input DataFrame cannot be empty"
-    
-    # Ensure the output directory exists
-    output_dir = os.path.dirname(output_file)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    # Validate that required columns exist
-    required_cols = [id_col, gene_col]
-    if desc_col is not None:
-        required_cols.append(desc_col)
-    
-    missing_cols = [col for col in required_cols if col not in input_df.columns]
-    if missing_cols:
-        raise ValueError(f"Missing required columns: {', '.join(missing_cols)}")
-    
-    # Assert ID column has no NaN values
-    assert not input_df[id_col].isna().any(), f"Column '{id_col}' contains NaN values"
-    
-    # Group by required columns
-    if desc_col is not None:
-        # Use description column if provided
-        grouped = input_df.groupby([id_col, desc_col])[gene_col].apply(list).reset_index()
-        # Count unique gene sets
-        num_gene_sets = len(input_df[[id_col, desc_col]].drop_duplicates())
-    else:
-        # Use ID column as description if desc_col is None
-        grouped = input_df.groupby([id_col])[gene_col].apply(list).reset_index()
-        # Add ID column as description column
-        grouped[id_col + '_desc'] = grouped[id_col]
-        desc_col = id_col + '_desc'
-        # Count unique gene sets
-        num_gene_sets = len(input_df[id_col].drop_duplicates())
-    
-    # Assert there's at least one gene set
-    assert len(grouped) > 0, "No gene sets found after grouping"
-    
-    # Count total genes before filtering
-    total_genes = sum(len(genes) for genes in grouped[gene_col])
-    
-    # Write to GMT file
-    gene_sets_written = 0
-    genes_written = 0
-    
-    with open(output_file, 'w') as file:
-        for _, row in grouped.iterrows():
-            # Handle potential NaN values in the description
-            description = row[desc_col] if pd.notna(row[desc_col]) else row[id_col]
+
+    @staticmethod
+    def _make_ranks_unique(ranked_list):
+        """
+        Check for duplicates in the 'Rank' column and make them unique by adding small values
+        that won't change the overall sorting order.
+        
+        Parameters:
+        -----------
+        ranked_list : pandas.DataFrame
+            DataFrame containing 'Gene' and 'Rank' columns, sorted by 'Rank' in descending order
             
-            # Filter out any None or NaN values from gene list
-            gene_list = [str(gene) for gene in row[gene_col] if pd.notna(gene)]
+        Returns:
+        --------
+        pandas.DataFrame
+            DataFrame with unique rank values, maintaining original sorting order
+        """
+        # Check for duplicates in the 'Rank' column
+        duplicate_ranks = ranked_list['Rank'].duplicated(keep=False)
+        num_duplicates = duplicate_ranks.sum()
+        
+        if num_duplicates > 0:
             
-            # Only write if there are genes in the set
-            if gene_list:
-                line = f"{row[id_col]}\t{description}\t" + '\t'.join(gene_list) + '\n'
-                file.write(line)
-                gene_sets_written += 1
-                genes_written += len(gene_list)
+            # Store original order to ensure we don't change it
+            ranked_list['original_order'] = range(len(ranked_list))
+            
+            # Group by Rank value to find duplicates
+            for rank, group in ranked_list[duplicate_ranks].groupby('Rank'):
+                
+                # Calculate a small value that won't change the sorting order
+                # Get the difference to the next smaller rank value
+                idx = ranked_list['Rank'].unique().tolist().index(rank)
+                if idx < len(ranked_list['Rank'].unique()) - 1:
+                    next_smaller_rank = sorted(ranked_list['Rank'].unique(), reverse=True)[idx + 1]
+                    epsilon = abs(rank - next_smaller_rank) / (len(group) * 2)
+                else:
+                    # If it's the smallest rank, use a small fraction of its absolute value
+                    epsilon = abs(rank) / 1000000 if rank != 0 else 0.0000001
+                    
+                # Add incrementally smaller values to maintain the original order
+                for i, (idx, row) in enumerate(group.iterrows()):
+                    # Smaller adjustment for higher ranks (preserves descending order)
+                    adjustment = epsilon * (i + 1) / (len(group) + 1)
+                    ranked_list.at[idx, 'Rank'] = rank - adjustment
+                    
+            # Resort to ensure order is maintained
+            ranked_list = ranked_list.sort_values(by='Rank', ascending=False)
+            
+            # Remove the temporary column
+            ranked_list = ranked_list.drop('original_order', axis=1)
+            
+            # Verify no duplicates remain
+            assert ranked_list['Rank'].duplicated().sum() == 0, "Failed to remove all duplicate rank values"
+            print("Successfully made all Rank values unique while preserving order")
+        else:
+            print("No duplicate Rank values found")
+            
+        return ranked_list
+
     
-    # Final assertions to ensure data was written
-    assert gene_sets_written > 0, "No gene sets were written to the output file"
-    assert os.path.exists(output_file), f"Output file {output_file} was not created"
-    assert os.path.getsize(output_file) > 0, f"Output file {output_file} is empty"
+# def convert_dataframe_to_gmt(input_df, output_file='output.gmt', id_col='Function.ID', 
+#                             desc_col=None, gene_col='Wormbase.ID'):
+#     """
+#     Convert a pandas DataFrame to GMT file format.
     
-    print(f"Successfully created GMT file: {output_file}")
-    print(f"Processed {num_gene_sets} gene sets, wrote {gene_sets_written} sets with at least one gene")
-    print(f"Total genes in input: {total_genes}, total genes written: {genes_written}")
+#     Parameters:
+#     -----------
+#     input_df : pandas.DataFrame
+#         Input DataFrame containing gene set information
+#     output_file : str
+#         Path to output GMT file
+#     id_col : str
+#         Column name for the gene set ID (also used as description if desc_col is None)
+#     desc_col : str or None
+#         Column name for the gene set description (if None, id_col will be used instead)
+#     gene_col : str
+#         Column name for the gene identifiers
     
-    return output_file
+#     Returns:
+#     --------
+#     str
+#         Path to the created GMT file
+#     """
+#     # Assert input is a DataFrame
+#     assert isinstance(input_df, pd.DataFrame), "Input must be a pandas DataFrame"
+#     assert not input_df.empty, "Input DataFrame cannot be empty"
+    
+#     # Ensure the output directory exists
+#     output_dir = os.path.dirname(output_file)
+#     if output_dir and not os.path.exists(output_dir):
+#         os.makedirs(output_dir)
+    
+#     # Validate that required columns exist
+#     required_cols = [id_col, gene_col]
+#     if desc_col is not None:
+#         required_cols.append(desc_col)
+    
+#     missing_cols = [col for col in required_cols if col not in input_df.columns]
+#     if missing_cols:
+#         raise ValueError(f"Missing required columns: {', '.join(missing_cols)}")
+    
+#     # Assert ID column has no NaN values
+#     assert not input_df[id_col].isna().any(), f"Column '{id_col}' contains NaN values"
+    
+#     # Group by required columns
+#     if desc_col is not None:
+#         # Use description column if provided
+#         grouped = input_df.groupby([id_col, desc_col])[gene_col].apply(list).reset_index()
+#         # Count unique gene sets
+#         num_gene_sets = len(input_df[[id_col, desc_col]].drop_duplicates())
+#     else:
+#         # Use ID column as description if desc_col is None
+#         grouped = input_df.groupby([id_col])[gene_col].apply(list).reset_index()
+#         # Add ID column as description column
+#         grouped[id_col + '_desc'] = grouped[id_col]
+#         desc_col = id_col + '_desc'
+#         # Count unique gene sets
+#         num_gene_sets = len(input_df[id_col].drop_duplicates())
+    
+#     # Assert there's at least one gene set
+#     assert len(grouped) > 0, "No gene sets found after grouping"
+    
+#     # Count total genes before filtering
+#     total_genes = sum(len(genes) for genes in grouped[gene_col])
+    
+#     # Write to GMT file
+#     gene_sets_written = 0
+#     genes_written = 0
+    
+#     with open(output_file, 'w') as file:
+#         for _, row in grouped.iterrows():
+#             # Handle potential NaN values in the description
+#             description = row[desc_col] if pd.notna(row[desc_col]) else row[id_col]
+            
+#             # Filter out any None or NaN values from gene list
+#             gene_list = [str(gene) for gene in row[gene_col] if pd.notna(gene)]
+            
+#             # Only write if there are genes in the set
+#             if gene_list:
+#                 line = f"{row[id_col]}\t{description}\t" + '\t'.join(gene_list) + '\n'
+#                 file.write(line)
+#                 gene_sets_written += 1
+#                 genes_written += len(gene_list)
+    
+#     # Final assertions to ensure data was written
+#     assert gene_sets_written > 0, "No gene sets were written to the output file"
+#     assert os.path.exists(output_file), f"Output file {output_file} was not created"
+#     assert os.path.getsize(output_file) > 0, f"Output file {output_file} is empty"
+    
+#     print(f"Successfully created GMT file: {output_file}")
+#     print(f"Processed {num_gene_sets} gene sets, wrote {gene_sets_written} sets with at least one gene")
+#     print(f"Total genes in input: {total_genes}, total genes written: {genes_written}")
+    
+#     return output_file

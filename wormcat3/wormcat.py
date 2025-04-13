@@ -5,6 +5,7 @@ from typing import Union, List, Dict
 from wormcat3 import file_util
 from wormcat3.annotations_manger import AnnotationsManager
 from wormcat3.statistical_analysis import EnrichmentAnalyzer
+from wormcat3.gsea_analyzer import GSEAAnalyzer
 from wormcat3.constants import PAdjustMethod
 from wormcat3.bubble_chart import create_bubble_chart
 from wormcat3.sunburst import create_sunburst
@@ -16,7 +17,10 @@ class Wormcat:
     and statistical analysis for gene enrichment.
     """
     
-    def __init__(self, working_dir_path=cs.DEFAULT_WORKING_DIR_PATH, run_prefix=cs.DEFAULT_RUN_PREFIX, annotation_file_name=cs.DEFAULT_ANNOTATION_FILE_NAME):
+    def __init__(self, 
+                 working_dir_path = cs.DEFAULT_WORKING_DIR_PATH, 
+                 run_prefix = cs.DEFAULT_RUN_PREFIX, 
+                 annotation_file_name = cs.DEFAULT_ANNOTATION_FILE_NAME):
         """Initialize Wormcat with working directory and annotation file."""
         
         ### Create the working directory 
@@ -28,6 +32,26 @@ class Wormcat:
         self.annotation_manager = AnnotationsManager(annotation_file_name)
 
 
+    def run_gsea(self, deseq2_input: Union[str, pd.DataFrame]):
+        
+        if isinstance(deseq2_input, str):
+            deseq2_df = file_util.read_deseq2_file(deseq2_input)
+        else:
+            deseq2_df = deseq2_input
+
+        gsea_analyzer = GSEAAnalyzer(self.working_dir_path)
+        print("Before ranked_list_df")
+        ranked_list_df = gsea_analyzer.create_ranked_list(deseq2_df)
+        print("After ranked_list_df")
+        for category in [1,2,3]:
+            gmt_format = self.annotation_manager.category_to_gmt_format(category)
+            results_name = f"gsea_category_{category}_{self.run_number}"
+            results_df = gsea_analyzer.run_preranked_gsea(ranked_list_df , gmt_format, results_name)
+            # Save the results_df
+            gsea_category_path = Path(self.working_dir_path) / f"{results_name}.csv"
+            results_df.to_csv(gsea_category_path, index=False)
+
+        
     def enrichment_test(
             self, 
             gene_set_input: Union[str, list], 

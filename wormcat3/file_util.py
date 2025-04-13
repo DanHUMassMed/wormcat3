@@ -1,6 +1,7 @@
 import os
 import uuid
 from pathlib import Path
+import pandas as pd
 import re
 
 def validate_directory_path(directory_path, not_empty_check = True):
@@ -42,9 +43,27 @@ def find_file_path(file_name, additional_search_paths=[]):
             return str(file_path)  # Return the first found file path
     return None  # File not found in any directory
 
+def read_deseq2_file(file_path):
+    """Read deseq2 file"""
+    
+    if not Path(file_path).exists():
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
+    
+    # Read the CSV file into a DataFrame
+    deseq2_df = pd.read_csv(file_path)
+
+    # Ensure required columns are present
+    required_columns = {'ID', 'log2FoldChange', 'pvalue'}
+    missing_columns = required_columns - set(deseq2_df.columns)
+    if missing_columns:
+        raise ValueError(f"Input DESeq2 Dataframe is missing required columns: {missing_columns}")
+    
+    # Extract the first column as a list
+    return deseq2_df
+
+
 def read_gene_set_file(file_path):
     """Read the first column of a CSV file as a list."""
-    import pandas as pd
     
     if not Path(file_path).exists():
         raise FileNotFoundError(f"The file {file_path} does not exist.")
