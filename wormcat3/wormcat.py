@@ -9,6 +9,7 @@ from wormcat3.gsea_analyzer import GSEAAnalyzer
 from wormcat3.constants import PAdjustMethod
 from wormcat3.bubble_chart import create_bubble_chart
 from wormcat3.sunburst import create_sunburst
+from wormcat3.wormcat_excel import WormcatExcel
 import wormcat3.constants as cs
 
 class Wormcat:
@@ -142,4 +143,50 @@ class Wormcat:
             
         run_number = os.path.basename(base_dir_path)
         create_sunburst(base_dir_path,run_number)
-    
+        
+    def wormcat_batch(self,
+            input_data: str, 
+            *, 
+            p_adjust_method = PAdjustMethod.BONFERRONI, 
+            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
+        
+        input_path = Path(input_data)
+        
+        # Check if path exists
+        if not input_path.exists():
+            raise FileNotFoundError(f"Path not found: {input_data}")
+        
+        if input_path.is_file():
+                # Check if it's an Excel file
+                if input_path.suffix.lower() in ['.xlsx', '.xls', '.xlsm']:
+                    try:
+                        csv_file_path = Path(self.working_dir_path) /f"{input_path.stem}_CSVs"
+                        WormcatExcel.extract_csv_files(input_data, csv_file_path)
+                    except Exception as e:
+                        print(f"Invalid Excel file: {input_path}. Error: {str(e)}")
+                        return
+                else:
+                    print(f"File is not an Excel file: {input_path}")
+                    return
+            
+        # Check if it's a directory
+        elif input_path.is_dir():
+            csv_file_path = input_path
+        else:
+            print(f"input_data is neither a valid Excel file nor a directory with CSV files: {input_data}")
+            return
+                    
+        # Look for CSV files
+        csv_files = list(csv_file_path.glob('*.csv'))  
+        if csv_files:
+            for file in csv_files:
+                wormcat = Wormcat(working_dir_path=self.working_dir_path,run_prefix=file.stem)
+                wormcat.analyze_and_visualize_enrichment(str(file), p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
+        else:
+            print(f"Directory doesn't contain any CSV files: {input_path}")
+            return 
+        
+
+        annotation_file_path = self.annotation_manager.annotation_file_path
+        wormcat_excel = WormcatExcel()
+        wormcat_excel.create_summary_spreadsheet(self.working_dir_path, annotation_file_path, f"{self.working_dir_path}/{input_path.stem}_output.xlsx")

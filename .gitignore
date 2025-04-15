@@ -6,6 +6,9 @@ __pycache__/
 *.gmt
 *.xlsx
 
+# But include this specific file
+!Murphy_TS.xlsx
+
 wormcat_out/
 dist/
 wormcat3.egg-info/
