@@ -32,7 +32,7 @@ class Wormcat:
         self.annotation_manager = AnnotationsManager(annotation_file_name)
 
 
-    def run_gsea(self, deseq2_input: Union[str, pd.DataFrame]):
+    def perform_gsea_analysis(self, deseq2_input: Union[str, pd.DataFrame]):
         
         if isinstance(deseq2_input, str):
             deseq2_df = file_util.read_deseq2_file(deseq2_input)
@@ -52,7 +52,7 @@ class Wormcat:
             results_df.to_csv(gsea_category_path, index=False)
 
         
-    def enrichment_test(
+    def perform_enrichment_analysis(
             self, 
             gene_set_input: Union[str, list], 
             background_input: Union[str, list] = None, 
@@ -125,14 +125,14 @@ class Wormcat:
             p_adjust_threshold=p_adjust_threshold
         )
 
-    def test_and_chart(self,
+    def analyze_and_visualize_enrichment(self,
             gene_set_input: Union[str, list], 
             background_input: Union[str, list] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
             p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
         
-        test_results = self.enrichment_test(gene_set_input, background_input, p_adjust_method=p_adjust_method, p_adjust_threshold=p_adjust_threshold)
+        test_results = self.perform_enrichment_analysis(gene_set_input, background_input, p_adjust_method=p_adjust_method, p_adjust_threshold=p_adjust_threshold)
         for test_result in test_results:  # each d is a dict with one item
             result_file_path, result_df = next(iter(test_result.items()))
             data_file_nm = os.path.basename(result_file_path)

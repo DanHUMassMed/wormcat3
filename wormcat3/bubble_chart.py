@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='plotnine')
 warnings.filterwarnings('ignore', category=DeprecationWarning, module='plotnine')
     
-def preprocess_bubble_data(data_file_path):
+def preprocess_bubble_data(data_file_path, add_calibration=False):
     """
     Preprocess CSV data for bubble plot visualization.
     
@@ -29,15 +29,15 @@ def preprocess_bubble_data(data_file_path):
         bubbles_data = bubbles_data.dropna()
         
         # # Add calibration points
-        # calibration_points = pd.DataFrame({
-        #     "Category": ["calibration high", "calibration low"],
-        #     "RGS": [250, 1],
-        #     "AC": [0, 0],
-        #     "PValue": [1.00E-50, 1],
-        #     correction_method: [1.00E-50, 1]
-        # })
-        
-        # bubbles_data = pd.concat([bubbles_data, calibration_points], ignore_index=True)
+        if add_calibration:
+            calibration_points = pd.DataFrame({
+                "Category": ["calibration high", "calibration low"],
+                "RGS": [250, 1],
+                "AC": [0, 0],
+                "PValue": [1.00E-50, 1],
+                correction_method: [1.00E-50, 1]
+            })
+            bubbles_data = pd.concat([bubbles_data, calibration_points], ignore_index=True)
         
         # Compute normalized value as a placeholder
         scale_for_visualization=0.001
@@ -209,13 +209,13 @@ def generate_bubble_plot(df, svg_file_path, plot_title=cs.DEFAULT_TITLE, width=c
         raise IOError(f"Failed to save plot: {e}")
 
 
-def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS") -> None:
+def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS", add_calibration=False) -> None:
     try:
         data_file_path = Path(dir_path) / data_file_nm
         svg_file_nm = data_file_nm[:-3] + 'svg'
         svg_file_path = Path(dir_path) / svg_file_nm
         
-        bubbles_data = preprocess_bubble_data(data_file_path)
+        bubbles_data = preprocess_bubble_data(data_file_path, add_calibration = add_calibration)
 
         generate_bubble_plot(bubbles_data, svg_file_path, plot_title = plot_title)
     except Exception as e:

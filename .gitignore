@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 *.gmt
+*.xlsx
 
 wormcat_out/
 dist/

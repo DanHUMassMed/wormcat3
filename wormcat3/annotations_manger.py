@@ -4,7 +4,7 @@ from wormcat3 import file_util
 import wormcat3.constants as cs
 
 class AnnotationsManager:
-    """Manages gene annotations and preprocessing."""
+    """ Manages gene annotations and preprocessing. """
     
     def __init__(self, annotation_file=cs.DEFAULT_ANNOTATION_FILE_NAME):
         """Initialize with the path to the annotation file."""
@@ -20,7 +20,8 @@ class AnnotationsManager:
      
         
     def _load_annotations(self):
-        """Load annotations from file."""
+        """ Load annotations from file. """
+        
         try:
             df = pd.read_csv(self.annotation_file_path)
             df.columns = df.columns.str.replace(' ', '.')
@@ -31,7 +32,8 @@ class AnnotationsManager:
             raise ValueError(f"Failed to load annotation file: {e}")
     
     def get_gene_id_type(self, gene_set):
-        """Determine the gene ID type from the gene set."""
+        """ Determine the gene ID type from the gene set. """
+        
         if len(gene_set) < 2:
             raise ValueError("At least two genes are required for comparison.")
         
@@ -45,7 +47,8 @@ class AnnotationsManager:
     
     @staticmethod
     def dedup_list(input_list):
-        """Deduplicate a list while preserving order."""
+        """ Deduplicate a list while preserving order. """
+        
         seen = set()
         deduped_list = []
         for item in input_list:
@@ -55,7 +58,8 @@ class AnnotationsManager:
         return deduped_list
     
     def add_annotations(self, gene_set_list, gene_type):
-        """Add annotations to the gene set."""
+        """ Add annotations to the gene set. """
+        
         gene_set_df = pd.DataFrame(gene_set_list, columns=[gene_type])
         
         # Verify if 'gene_type' is a column in the DataFrame
@@ -66,7 +70,8 @@ class AnnotationsManager:
 
 
     def split_background_on_annotation_match(self, background_list, gene_type):
-        """Split background genes into those with and without annotations."""
+        """ Split background genes into those with and without annotations. """
+        
         background_df = pd.DataFrame(background_list, columns=[gene_type])
         
         # Check if gene_type is in both dataframes
@@ -88,30 +93,23 @@ class AnnotationsManager:
         return background_available_df, background_not_matched_df
 
     def create_gmt_for_annotations(self, output_dir_path, output_file_nm_prefix="wormcat"):
-       file_util.validate_directory_path(output_dir_path, not_empty_check = False) 
-       for category in [1,2,3]:
-            gmt_lines = self.category_to_gmt_format(category)
+        """ Create GMT formatted files for all categories. """
+        for category in [1,2,3]:
+            gmt_format = self.category_to_gmt_format(category)
             output_file_path = f"{output_dir_path}/{output_file_nm_prefix}_cat_{category}.gmt"
-            self.save_gmt_to_file(gmt_lines, output_file_path)    
+            self.save_gmt_to_file(gmt_format, output_file_path)    
 
     def category_to_gmt_format(self, category):
-        """
-        Convert an annotation dataframe category to GMT format.
-        
-        """
+        """ Convert an annotation dataframe category to GMT format. """
         category_col = f"Category.{category}"
         gene_col = "Wormbase.ID"
-        id_col="Function.ID"
-        desc_col=None
+        id_col = "Function.ID"
                 
         category_df = self.annotations_df[[gene_col, category_col]]
         category_df = category_df.rename(columns={category_col: id_col})
         
         # Validate that required columns exist
-        required_cols = [id_col, gene_col]
-        if desc_col is not None:
-            required_cols.append(desc_col)
-        
+        required_cols = [id_col, gene_col]        
         missing_cols = [col for col in required_cols if col not in category_df.columns]
         if missing_cols:
             raise ValueError(f"Missing required columns: {', '.join(missing_cols)}")
@@ -119,32 +117,20 @@ class AnnotationsManager:
         # Assert ID column has no NaN values
         assert not category_df[id_col].isna().any(), f"Column '{id_col}' contains NaN values"
         
-        # Group by required columns
-        if desc_col is not None:
-            # Use description column if provided
-            grouped = category_df.groupby([id_col, desc_col])[gene_col].apply(list).reset_index()
-        else:
-            # Use ID column as description if desc_col is None
-            grouped = category_df.groupby([id_col])[gene_col].apply(list).reset_index()
-            # Add ID column as description column
-            grouped[id_col + '_desc'] = grouped[id_col]
-            desc_col = id_col + '_desc'
+        # Use ID column as description if desc_col is None
+        grouped = category_df.groupby([id_col])[gene_col].apply(list).reset_index()
         
         # Assert there's at least one gene set
         assert len(grouped) > 0, "No gene sets found after grouping"
         
-        # Create GMT formatted lines
+        # Create GMT formatted dictionary
         gmt_format = {}
-        for _, row in grouped.iterrows():
-            # Handle potential NaN values in the description
-            description = row[desc_col] if pd.notna(row[desc_col]) else row[id_col]
-            
+        for _, row in grouped.iterrows():            
             # Filter out any None or NaN values from gene list
             gene_list = [str(gene) for gene in row[gene_col] if pd.notna(gene)]
             
             # Only include if there are genes in the set
             if gene_list:
-                #line = f"{row[id_col]}\t{description}\t" + '\t'.join(gene_list)
                 gmt_format[row[id_col]] = gene_list
         
         # Final assertion to ensure data was processed
@@ -152,23 +138,17 @@ class AnnotationsManager:
         
         return gmt_format
 
-    def save_gmt_to_file(self, gmt_lines, output_file_path='wormcat.gmt'):
-        """
-        Convert a pandas DataFrame to GMT file format and save to disk.
-
-        """
-        import os
-        import pandas as pd
-        
+    def save_gmt_to_file(self, gmt_format, output_file_path='wormcat.gmt'):
+        """ Write GMT formatted dictionary to disk. """
         # Ensure the output directory exists
-        output_dir = os.path.dirname(output_file_path)
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        
+        output_dir_path = os.path.dirname(output_file_path)
+        file_util.validate_directory_path(output_dir_path, not_empty_check = False) 
         
         # Write to GMT file
         with open(output_file_path, 'w') as file:
-            for line in gmt_lines:
+            for gene_id, gene_list in gmt_format.items():
+                description = gene_id
+                line = f"{gene_id}\t{description}\t" + '\t'.join(gene_list)
                 file.write(line + '\n')
         
         # Final assertions to ensure data was written
