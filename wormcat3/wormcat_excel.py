@@ -355,6 +355,7 @@ class WormcatExcel:
             sheet_label: Name of the sheet to process
         """
         cat_files = files_to_process[files_to_process['sheet'] == sheet_label]
+        cat_files = cat_files.copy()
         if cat_files.empty:
             print(f"No files to process for sheet {sheet_label}")
             return
@@ -366,6 +367,8 @@ class WormcatExcel:
             category_sheet = self._create_category_summary(data, label_category)
             
             # Process each file for this category
+            cat_files.sort_values(by='label', inplace=True)
+            
             for _, row in cat_files.iterrows():
                 try:
                     file_path = Path(row['file'])
