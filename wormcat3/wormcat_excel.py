@@ -274,6 +274,7 @@ class WormcatExcel:
             worksheet: Excel worksheet object
             sheet_range: Cell range to format (e.g. "B1:Z100")
         """
+        print(f"{worksheet=} {sheet_range=}")
         # Format for zero values
         worksheet.conditional_format(sheet_range, {
             'type': 'cell', 
@@ -331,6 +332,15 @@ class WormcatExcel:
             print(f"Error processing category files: {str(e)}")
             raise
 
+
+    def _get_excel_col_name(self, n: int) -> str:
+        """Convert 1-based column number to Excel column letter."""
+        result = ""
+        while n > 0:
+            n, remainder = divmod(n - 1, 26)
+            result = chr(65 + remainder) + result
+        return result
+
     def _process_sheet(self, files_to_process: pd.DataFrame, 
                       data: pd.DataFrame, 
                       writer: pd.ExcelWriter, 
@@ -374,7 +384,9 @@ class WormcatExcel:
             
             # Apply formatting
             num_rows, num_columns = category_sheet.shape
-            sheet_range = f"B1:{chr(num_columns + 64)}{num_rows+1}"
+            #sheet_range = f"B1:{chr(num_columns + 64)}{num_rows+1}"
+            col_name = self._get_excel_col_name(num_columns)
+            sheet_range = f"B1:{col_name}{num_rows+1}"
             self._apply_conditional_formatting(worksheet, sheet_range)
             
             worksheet.autofit()
