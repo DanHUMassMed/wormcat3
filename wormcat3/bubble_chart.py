@@ -216,8 +216,13 @@ def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS", add_
         svg_file_path = Path(dir_path) / svg_file_nm
         
         bubbles_data = preprocess_bubble_data(data_file_path, add_calibration = add_calibration)
-
-        generate_bubble_plot(bubbles_data, svg_file_path, plot_title = plot_title)
+        
+        # Scale the height of the bubble chart based on the number of items
+        bubbles_data_len = len(bubbles_data)
+        height_fun = lambda x: min(0.1 * x + 6.3, 25)
+        height = height_fun(bubbles_data_len)
+        
+        generate_bubble_plot(bubbles_data, svg_file_path, plot_title = plot_title,height=height, width=9)
     except Exception as e:
         print(f"Error: {e}")
 
