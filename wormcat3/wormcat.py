@@ -41,9 +41,8 @@ class Wormcat:
             deseq2_df = deseq2_input
 
         gsea_analyzer = GSEAAnalyzer(self.working_dir_path)
-        print("Before ranked_list_df")
         ranked_list_df = gsea_analyzer.create_ranked_list(deseq2_df)
-        print("After ranked_list_df")
+
         for category in [1,2,3]:
             gmt_format = self.annotation_manager.category_to_gmt_format(category)
             results_name = f"gsea_category_{category}_{self.run_number}"
@@ -134,7 +133,7 @@ class Wormcat:
             p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
         
         test_results = self.perform_enrichment_analysis(gene_set_input, background_input, p_adjust_method=p_adjust_method, p_adjust_threshold=p_adjust_threshold)
-        for test_result in test_results:  # each d is a dict with one item
+        for test_result in test_results:
             result_file_path, result_df = next(iter(test_result.items()))
             data_file_nm = os.path.basename(result_file_path)
             base_dir_path = os.path.dirname(result_file_path)

@@ -10,6 +10,8 @@ __pycache__/
 !Murphy_TS.xlsx
 
 wormcat_out/
+orouke_cell_type/
+orouke_cell_type_group/
 dist/
 wormcat3.egg-info/
 
