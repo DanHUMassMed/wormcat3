@@ -94,7 +94,6 @@ class GSEAAnalyzer:
         
         try:
             # Run pre-ranked GSEA
-            print("Before gp.prerank")
             prerank_results = gp.prerank(
                 rnk = ranked_genes,
                 gene_sets = gene_sets,
@@ -107,7 +106,7 @@ class GSEAAnalyzer:
                 threads = threads,
                 verbose = verbose
             )
-            print("After gp.prerank")
+
             # Store the full results object
             self.results = prerank_results
             
@@ -353,98 +352,3 @@ class GSEAAnalyzer:
             
         return ranked_list
 
-    
-# def convert_dataframe_to_gmt(input_df, output_file='output.gmt', id_col='Function.ID', 
-#                             desc_col=None, gene_col='Wormbase.ID'):
-#     """
-#     Convert a pandas DataFrame to GMT file format.
-    
-#     Parameters:
-#     -----------
-#     input_df : pandas.DataFrame
-#         Input DataFrame containing gene set information
-#     output_file : str
-#         Path to output GMT file
-#     id_col : str
-#         Column name for the gene set ID (also used as description if desc_col is None)
-#     desc_col : str or None
-#         Column name for the gene set description (if None, id_col will be used instead)
-#     gene_col : str
-#         Column name for the gene identifiers
-    
-#     Returns:
-#     --------
-#     str
-#         Path to the created GMT file
-#     """
-#     # Assert input is a DataFrame
-#     assert isinstance(input_df, pd.DataFrame), "Input must be a pandas DataFrame"
-#     assert not input_df.empty, "Input DataFrame cannot be empty"
-    
-#     # Ensure the output directory exists
-#     output_dir = os.path.dirname(output_file)
-#     if output_dir and not os.path.exists(output_dir):
-#         os.makedirs(output_dir)
-    
-#     # Validate that required columns exist
-#     required_cols = [id_col, gene_col]
-#     if desc_col is not None:
-#         required_cols.append(desc_col)
-    
-#     missing_cols = [col for col in required_cols if col not in input_df.columns]
-#     if missing_cols:
-#         raise ValueError(f"Missing required columns: {', '.join(missing_cols)}")
-    
-#     # Assert ID column has no NaN values
-#     assert not input_df[id_col].isna().any(), f"Column '{id_col}' contains NaN values"
-    
-#     # Group by required columns
-#     if desc_col is not None:
-#         # Use description column if provided
-#         grouped = input_df.groupby([id_col, desc_col])[gene_col].apply(list).reset_index()
-#         # Count unique gene sets
-#         num_gene_sets = len(input_df[[id_col, desc_col]].drop_duplicates())
-#     else:
-#         # Use ID column as description if desc_col is None
-#         grouped = input_df.groupby([id_col])[gene_col].apply(list).reset_index()
-#         # Add ID column as description column
-#         grouped[id_col + '_desc'] = grouped[id_col]
-#         desc_col = id_col + '_desc'
-#         # Count unique gene sets
-#         num_gene_sets = len(input_df[id_col].drop_duplicates())
-    
-#     # Assert there's at least one gene set
-#     assert len(grouped) > 0, "No gene sets found after grouping"
-    
-#     # Count total genes before filtering
-#     total_genes = sum(len(genes) for genes in grouped[gene_col])
-    
-#     # Write to GMT file
-#     gene_sets_written = 0
-#     genes_written = 0
-    
-#     with open(output_file, 'w') as file:
-#         for _, row in grouped.iterrows():
-#             # Handle potential NaN values in the description
-#             description = row[desc_col] if pd.notna(row[desc_col]) else row[id_col]
-            
-#             # Filter out any None or NaN values from gene list
-#             gene_list = [str(gene) for gene in row[gene_col] if pd.notna(gene)]
-            
-#             # Only write if there are genes in the set
-#             if gene_list:
-#                 line = f"{row[id_col]}\t{description}\t" + '\t'.join(gene_list) + '\n'
-#                 file.write(line)
-#                 gene_sets_written += 1
-#                 genes_written += len(gene_list)
-    
-#     # Final assertions to ensure data was written
-#     assert gene_sets_written > 0, "No gene sets were written to the output file"
-#     assert os.path.exists(output_file), f"Output file {output_file} was not created"
-#     assert os.path.getsize(output_file) > 0, f"Output file {output_file} is empty"
-    
-#     print(f"Successfully created GMT file: {output_file}")
-#     print(f"Processed {num_gene_sets} gene sets, wrote {gene_sets_written} sets with at least one gene")
-#     print(f"Total genes in input: {total_genes}, total genes written: {genes_written}")
-    
-#     return output_file
