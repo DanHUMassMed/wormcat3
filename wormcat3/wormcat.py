@@ -145,6 +145,7 @@ class Wormcat:
         
     def wormcat_batch(self,
             input_data: str, 
+            background_input: Union[str, list] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
             p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
@@ -180,7 +181,7 @@ class Wormcat:
         if csv_files:
             for file in csv_files:
                 wormcat = Wormcat(working_dir_path=self.working_dir_path,run_prefix=file.stem)
-                wormcat.analyze_and_visualize_enrichment(str(file), p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
+                wormcat.analyze_and_visualize_enrichment(str(file), background_input, p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
         else:
             print(f"Directory doesn't contain any CSV files: {input_path}")
             return 
@@ -188,4 +189,5 @@ class Wormcat:
 
         annotation_file_path = self.annotation_manager.annotation_file_path
         wormcat_excel = WormcatExcel()
-        wormcat_excel.create_summary_spreadsheet(self.working_dir_path, annotation_file_path, f"{self.working_dir_path}/{input_path.stem}_output.xlsx")
+        working_dir_path = Path(self.working_dir_path)
+        wormcat_excel.create_summary_spreadsheet(self.working_dir_path, annotation_file_path, f"{working_dir_path}/{working_dir_path.stem}.xlsx")

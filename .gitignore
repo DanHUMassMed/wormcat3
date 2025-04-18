@@ -12,6 +12,7 @@ __pycache__/
 wormcat_out/
 orouke_cell_type/
 orouke_cell_type_group/
+orouke/
 dist/
 wormcat3.egg-info/
 
