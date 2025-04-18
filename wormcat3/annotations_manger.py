@@ -69,28 +69,28 @@ class AnnotationsManager:
         return pd.merge(gene_set_df, self.annotations_df, on=gene_type, how='left')
 
 
-    def split_background_on_annotation_match(self, background_list, gene_type):
+    def segment_genes_by_annotation_match(self, gene_set_list, gene_type):
         """ Split background genes into those with and without annotations. """
         
-        background_df = pd.DataFrame(background_list, columns=[gene_type])
+        gene_set_df = pd.DataFrame(gene_set_list, columns=[gene_type])
         
         # Check if gene_type is in both dataframes
-        if gene_type not in background_df.columns:
-            raise ValueError(f"'{gene_type}' not found in background_df.")
+        if gene_type not in gene_set_df.columns:
+            raise ValueError(f"'{gene_type}' not found in gene_set_df.")
         if gene_type not in self.annotations_df.columns:
             raise ValueError(f"'{gene_type}' not found in annotations_df.")
         
         # Perform the left merge
-        merged_df = pd.merge(background_df, self.annotations_df, on=gene_type, how='left')
+        merged_df = pd.merge(gene_set_df, self.annotations_df, on=gene_type, how='left')
         
         # Split based on presence of annotation (assuming at least one non-key column in annotations_df)
         annotation_columns = [col for col in self.annotations_df.columns if col != gene_type]
         
-        background_available_df = merged_df.dropna(subset=annotation_columns)
-        background_not_matched_df = merged_df[merged_df[annotation_columns].isnull().all(axis=1)]
-        background_not_matched_df = background_not_matched_df[[gene_type]]
+        genes_matched_df = merged_df.dropna(subset=annotation_columns)
+        genes_not_matched_df = merged_df[merged_df[annotation_columns].isnull().all(axis=1)]
+        genes_not_matched_df = genes_not_matched_df[[gene_type]]
 
-        return background_available_df, background_not_matched_df
+        return genes_matched_df, genes_not_matched_df
 
     def create_gmt_for_annotations(self, output_dir_path, output_file_nm_prefix="wormcat"):
         """ Create GMT formatted files for all categories. """

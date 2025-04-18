@@ -84,11 +84,15 @@ class Wormcat:
         gene_type = self.annotation_manager.get_gene_id_type(gene_set_list)
         
         # Add annotations
-        gene_set_and_categories_df = self.annotation_manager.add_annotations(gene_set_list, gene_type)
+        gene_set_and_categories_df, genes_not_matched_df = self.annotation_manager.segment_genes_by_annotation_match(gene_set_list, gene_type)
         
         # Save the annotated input gene set
         rgs_and_categories_path = Path(self.working_dir_path) / f"input_annotated_{self.run_number}.csv"
         gene_set_and_categories_df.to_csv(rgs_and_categories_path, index=False)
+        
+        if not genes_not_matched_df.empty:
+                genes_not_annotated_path = Path(self.working_dir_path) / f"genes_not_annotated_{self.run_number}.csv"
+                genes_not_matched_df.to_csv(genes_not_annotated_path, index=False)
 
 
         # Preprocess background list
@@ -97,15 +101,15 @@ class Wormcat:
             background_type = self.annotation_manager.get_gene_id_type(background_list)
             if background_type != gene_type:
                 raise ValueError("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}")
-            background_df, background_not_matched_df = self.annotation_manager.split_background_on_annotation_match(background_list, background_type)
+            background_df, background_not_annotated_df = self.annotation_manager.segment_genes_by_annotation_match(background_list, background_type)
 
             # Save the annotated background input
             background_annotated_path = Path(self.working_dir_path) / f"background_annotated_{self.run_number}.csv"
             background_df.to_csv(background_annotated_path, index=False)
 
-            if not background_not_matched_df.empty:
-                background_not_matched_path = Path(self.working_dir_path) / "background_not_matched.csv"
-                background_not_matched_df.to_csv(background_not_matched_path, index=False)
+            if not background_not_annotated_df.empty:
+                background_not_annotated_path = Path(self.working_dir_path) / f"background_not_annotated_{self.run_number}.csv"
+                background_not_annotated_df.to_csv(background_not_annotated_path, index=False)
         else:
             # If no background is provided we use the whole genome  
             background_df = self.annotation_manager.annotations_df
