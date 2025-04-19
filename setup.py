@@ -4,7 +4,7 @@ Setup for pypi releases of wormcat3
 from setuptools import setup, find_packages
 from pathlib import Path
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
