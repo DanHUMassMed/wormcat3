@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION_FILE="wormcat3/__init__.py"  # Add this line
+VERSION_FILE="setup.py" 
 
 # Get current version
 VERSION=$(grep "__version__" $VERSION_FILE | cut -d'"' -f2)

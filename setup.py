@@ -1,15 +1,10 @@
 """
 Setup for pypi releases of wormcat3
 """
-from wormcat3 import __version__
 from setuptools import setup, find_packages
 from pathlib import Path
 
-# rm -rf dist
-# python setup.py sdist
-# pip install dist/wormcat3-1.0.1.tar.gz
-# twine check dist/*
-# twine upload --repository pypi dist/*
+__version__ = "0.0.2"
 
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
