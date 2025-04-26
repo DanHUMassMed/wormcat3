@@ -1,6 +1,13 @@
+import matplotlib
+matplotlib.use('Agg') 
+
 import pandas as pd
 import numpy as np
-from plotnine import *
+from plotnine import (
+    ggplot, aes, geom_point, ggtitle, labs, ylim, coord_flip,
+    scale_color_manual, scale_size_manual,
+    theme, element_blank, element_rect, element_text
+)
 from pathlib import Path
 import wormcat3.constants as cs
 import warnings
@@ -8,6 +15,7 @@ import warnings
 # Suppress UserWarnings and DeprecationWarnings from plotnine
 warnings.filterwarnings('ignore', category=UserWarning, module='plotnine')
 warnings.filterwarnings('ignore', category=DeprecationWarning, module='plotnine')
+warnings.filterwarnings('ignore', module="matplotlib.font_manager")
     
 def preprocess_bubble_data(data_file_path, add_calibration=False):
     """

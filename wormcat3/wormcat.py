@@ -123,7 +123,7 @@ class Wormcat:
         )
         
         # Run enrichment analysis
-        return self.analyzer.perform_enrichment_test(
+        return self.analyzer.calculate_category_enrichment_scores(
             gene_set_and_categories_df,
             p_adjust_method=p_adjust_method,
             p_adjust_threshold=p_adjust_threshold

@@ -15,7 +15,7 @@ class EnrichmentAnalyzer:
         self.run_number = run_number
         self.categories = [1, 2, 3]  # Wormcat Categories
     
-    def perform_enrichment_test(self, gene_set_and_categories_df, p_adjust_method=PAdjustMethod.BONFERRONI, p_adjust_threshold=0.01):
+    def calculate_category_enrichment_scores(self, gene_set_and_categories_df, p_adjust_method=PAdjustMethod.BONFERRONI, p_adjust_threshold=0.01):
         """Run enrichment test for all categories."""
         
         assert 0 < p_adjust_threshold <= 1, "p_adjust_threshold must be between 0 and 1 (exclusive lower, inclusive upper)."
@@ -72,7 +72,7 @@ class EnrichmentAnalyzer:
                     total_annotations_count
                 )
                 _, pvalue = fisher_exact(contingency_table, alternative="greater")
-                print(f"{rgs_value=}, {total_gene_set_count=}, {ac_value=}, {total_annotations_count=}")
+                #print(f"{rgs_value=}, {total_gene_set_count=}, {ac_value=}, {total_annotations_count=}")
             
             df_row = {"Category": row["Category"], "RGS": rgs_value, "AC": ac_value, "PValue": pvalue}
             fisher_cat_df.loc[len(fisher_cat_df)] = df_row
