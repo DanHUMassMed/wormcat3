@@ -142,6 +142,7 @@ class Wormcat:
             data_file_nm = os.path.basename(result_file_path)
             base_dir_path = os.path.dirname(result_file_path)
             plot_title = data_file_nm[:-10]
+            plot_title = plot_title.replace("_", " ")
             create_bubble_chart(base_dir_path, data_file_nm, plot_title = plot_title)
             
         run_number = os.path.basename(base_dir_path)

@@ -85,7 +85,16 @@ def is_file_path(input_string: str) -> bool:
         return True
     return False
     
+def sanitize(text: str) -> str:
+    # Replace spaces with underscores
+    text = text.replace(" ", "_")
+    # Remove invalid directory characters: / \ : * ? " < > | 
+    text = re.sub(r'[\/:*?"<>|]', '', text)
+    return text
+
 def generate_5_digit_hash(prefix: str = "", suffix: str = "") -> str:
+    prefix = sanitize(prefix)
+    suffix = sanitize(suffix)
     core = str(uuid.uuid4().int % 100000).zfill(5)
     return f"{prefix}{core}{suffix}"
 
