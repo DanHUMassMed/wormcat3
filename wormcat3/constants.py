@@ -4,13 +4,20 @@ from enum import Enum
 class PAdjustMethod(Enum):
     BONFERRONI = 'bonferroni'
     FDR = 'fdr_bh'
+    
+    @classmethod
+    def from_str(cls, value: str) -> "PAdjustMethod":
+        for method in cls:
+            if method.value == value:
+                return method
+        raise ValueError(f"Invalid PAdjustMethod: {value}")
 
 # Wormcat Configuration
 DEFAULT_WORKING_DIR_PATH = "./wormcat_out"
 DEFAULT_RUN_PREFIX = "run"
 
 # Annotations Management Configuration
-DEFAULT_P_ADJUST_THRESHOLD = 0.1
+DEFAULT_P_ADJUST_THRESHOLD = 0.10
 DEFAULT_ANNOTATION_FILE_NAME = "whole_genome_v2_nov-11-2021.csv"
 
 # Gene Set Enrichment Analysis

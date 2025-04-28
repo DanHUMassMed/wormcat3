@@ -31,6 +31,10 @@ class AnnotationsManager:
         except Exception as e:
             raise ValueError(f"Failed to load annotation file: {e}")
     
+    def annotation_name(self):
+        # Get the base name of the file (without directory and extension)
+        return os.path.splitext(os.path.basename(self.annotation_file_path))[0]
+    
     def get_gene_id_type(self, gene_set):
         """ Determine the gene ID type from the gene set. """
         

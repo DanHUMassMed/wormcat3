@@ -111,7 +111,7 @@ class EnrichmentAnalyzer:
         fisher_cat_adjusted_df = fisher_cat_adjusted_df[fisher_cat_adjusted_df[padj_col] < threshold]
         
         # Save results
-        output_file_path = Path(self.output_dir) / f"category_{category}_padj_{method[:3]}_{self.run_number}.csv"
+        output_file_path = Path(self.output_dir) / f"category_{category}_padj_{self.run_number}.csv"
         fisher_cat_adjusted_df.to_csv(output_file_path, index=False)
         
         return {output_file_path: fisher_cat_adjusted_df}

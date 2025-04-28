@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from datetime import datetime
 from pathlib import Path
 from typing import Union, List, Dict
 from wormcat3 import file_util
@@ -20,19 +21,33 @@ class Wormcat:
     
     def __init__(self, 
                  working_dir_path = cs.DEFAULT_WORKING_DIR_PATH, 
-                 run_prefix = cs.DEFAULT_RUN_PREFIX, 
-                 annotation_file_name = cs.DEFAULT_ANNOTATION_FILE_NAME):
+                 title = cs.DEFAULT_RUN_PREFIX, 
+                 annotation_file_name = cs.DEFAULT_ANNOTATION_FILE_NAME,
+                 email = None):
         """Initialize Wormcat with working directory and annotation file."""
         
+        self.email = email
+        self.title = title
         ### Create the working directory 
-        self.run_number = file_util.generate_5_digit_hash(prefix=run_prefix + "_")
+        self.run_number = file_util.generate_5_digit_hash(prefix=title + "_")
         working_dir_path = Path(working_dir_path) / self.run_number
         self.working_dir_path = file_util.validate_directory_path(working_dir_path)
         
         # Setup annotation manager
         self.annotation_manager = AnnotationsManager(annotation_file_name)
 
+    def _run_params(self, params: dict):
+        # Define the output file name
+        output_path = Path(self.working_dir_path) / f"run_params_{self.run_number}.txt"
+        
+        if "Timestamp" not in params:
+            params["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        # Write the dictionary manually as "key: value"
+        with open(output_path, 'w') as file:
+            for key, value in params.items():
+                file.write(f"{key}: {value}\n")
+        
     def perform_gsea_analysis(self, deseq2_input: Union[str, pd.DataFrame]):
         
         if isinstance(deseq2_input, str):
@@ -122,6 +137,16 @@ class Wormcat:
             self.run_number
         )
         
+        run_params = {
+            "Email":self.email,
+            "Title":self.title,
+            "Annotation File":self.annotation_manager.annotation_name(),
+            "Significance Method":p_adjust_method.value,
+            "Significance Threshold":p_adjust_threshold,
+            "Domain Scope":"All Genes" if background_list is None else "Custom Background"
+            }
+        self._run_params(run_params)
+        
         # Run enrichment analysis
         return self.analyzer.calculate_category_enrichment_scores(
             gene_set_and_categories_df,
@@ -185,7 +210,7 @@ class Wormcat:
         csv_files = list(csv_file_path.glob('*.csv'))  
         if csv_files:
             for file in csv_files:
-                wormcat = Wormcat(working_dir_path=self.working_dir_path,run_prefix=file.stem)
+                wormcat = Wormcat(working_dir_path=self.working_dir_path,title=file.stem)
                 wormcat.analyze_and_visualize_enrichment(str(file), background_input, p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
         else:
             print(f"Directory doesn't contain any CSV files: {input_path}")
