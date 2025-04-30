@@ -230,7 +230,7 @@ def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS", add_
         height_fun = lambda x: min(0.1 * x + 6.3, 25)
         height = height_fun(bubbles_data_len)
         
-        generate_bubble_plot(bubbles_data, svg_file_path, plot_title = plot_title,height=height, width=9)
+        generate_bubble_plot(bubbles_data, svg_file_path, plot_title = plot_title, height=height, width=9)
     except Exception as e:
         print(f"Error: {e}")
 

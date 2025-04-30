@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 import pandas as pd
 import re
+import zipfile
 
 def validate_directory_path(directory_path, not_empty_check = True):
     """
@@ -31,7 +32,7 @@ def find_file_path(file_name, additional_search_paths=[]):
         extdata_path  # Defaults location
     ]
     
-    # Check if the environment variable is set, and add it first if it exists
+    # Check if the environment variable is set, and add it to the front of the path if it exists
     wormcat_data_path = os.environ.get("WORMCAT_DATA_PATH")
     if wormcat_data_path:
         search_paths.insert(0, Path(wormcat_data_path))  # Add it as a Path object
@@ -58,7 +59,6 @@ def read_deseq2_file(file_path):
     if missing_columns:
         raise ValueError(f"Input DESeq2 Dataframe is missing required columns: {missing_columns}")
     
-    # Extract the first column as a list
     return deseq2_df
 
 
@@ -113,3 +113,26 @@ def extract_run_number(data_file_nm):
         raise ValueError(f"Invalid file name: {data_file_nm}. It must end with 'run_00000.csv' where '00000' are any 5 digits.")
 
 
+def zip_dir(path, output_zip_path=None):
+    """
+    Recursively zips the contents of a directory.
+    """
+    
+    path = os.path.abspath(path)
+
+    if output_zip_path is None:
+        output_zip_path = f"{path}.zip"
+    else:
+        output_zip_path = os.path.abspath(output_zip_path)
+        output_dir = os.path.dirname(output_zip_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    with zipfile.ZipFile(output_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(path):
+            for file in files:
+                abs_filepath = os.path.join(root, file)
+                rel_filepath = os.path.relpath(abs_filepath, start=path)
+                zipf.write(abs_filepath, arcname=rel_filepath)
+
+    return output_zip_path
