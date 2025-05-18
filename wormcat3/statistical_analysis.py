@@ -73,7 +73,6 @@ class EnrichmentAnalyzer:
                     total_annotations_count
                 )
                 _, pvalue = fisher_exact(contingency_table, alternative="greater")
-                #print(f"{rgs_value=}, {total_gene_set_count=}, {ac_value=}, {total_annotations_count=}")
             
             df_row = {"Category": row["Category"], "RGS": rgs_value, "AC": ac_value, "PValue": pvalue}
             fisher_cat_df.loc[len(fisher_cat_df)] = df_row

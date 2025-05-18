@@ -33,9 +33,9 @@ class AnnotationsManager:
             raise Wormcat3Error(f"Failed to load annotation file: {e}", ErrorCode.FILE_LOAD_FAILED, origin="AnnotationsManager._load_annotations")
     
     def annotation_name(self):
-        # Get the base name of the file (without directory and extension)
+        # Get the base name of the file (with extension, no directory)
         if isinstance(self.annotation_file_path, (str, os.PathLike)) and self.annotation_file_path:
-            return os.path.splitext(os.path.basename(self.annotation_file_path))[0]
+            return os.path.basename(self.annotation_file_path)
         else:
             return "[NO_ANNOTATION_NAME]"
 

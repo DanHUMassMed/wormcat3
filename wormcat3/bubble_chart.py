@@ -213,7 +213,6 @@ def generate_bubble_plot(df, svg_file_path, plot_title=cs.DEFAULT_TITLE, width=c
 
     try:
         p.save(filename=svg_file_path, format = "svg", width = width, height = height)
-        print(f"Saved plot to: {svg_file_path}")
     except Exception as e:
         raise Wormcat3Error(f"Failed to save plot: {e}", ErrorCode.INTERNAL_ERROR)
 

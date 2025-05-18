@@ -265,7 +265,6 @@ class WormcatExcel:
             worksheet: Excel worksheet object
             sheet_range: Cell range to format (e.g. "B1:Z100")
         """
-        print(f"{worksheet=} {sheet_range=}")
         # Format for zero values
         worksheet.conditional_format(sheet_range, {
             'type': 'cell', 
@@ -364,7 +363,7 @@ class WormcatExcel:
                 try:
                     file_path = Path(row['file'])
                     if not file_path.exists():
-                        print(f"File not found: {row['file']}")
+                        print(f"WARNING: File not found: {row['file']}")
                         continue
                     
                     category_sheet = self._process_category_file_row(row, category_sheet)
@@ -422,8 +421,6 @@ class WormcatExcel:
                         'label': dir_nm
                     }
                     process_lst.append(row)
-                else:
-                    print(f"File not found: {rgs_fisher_path}")
                     
         return process_lst
 

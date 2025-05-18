@@ -184,9 +184,6 @@ class GSEAAnalyzer:
         # Print any duplicates found
         if not duplicate_genes.empty:
             print(f"Found {len(duplicate_genes['Gene'].unique())} genes with duplicates:")
-            print(duplicate_genes.sort_values(by='Gene'))
-            
-            # Count total percentage of duplicated genes
             duplicate_percent = (len(duplicate_genes) / len(ranked_list)) * 100
             print(f"Duplicated genes represent {duplicate_percent:.2f}% of the dataset")
 

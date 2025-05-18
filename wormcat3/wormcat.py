@@ -74,8 +74,6 @@ class Wormcat:
 
         first_3_ids = ranked_list_df['Gene'].head(3).tolist()
         gene_type = self.annotation_manager.get_gene_id_type(first_3_ids)
-        print(f"{gene_type=}")
-
 
         for category in [1,2,3]:
             gmt_format = self.annotation_manager.category_to_gmt_format(category, id_col_nm=gene_type)
@@ -85,7 +83,7 @@ class Wormcat:
             gsea_category_path = Path(self.working_dir_path) / f"{results_name}.csv"
             results_df.to_csv(gsea_category_path, index=False)
             
-        print(f"Analysis complete. output can be found at {self.working_dir_path}")
+        print(f"Analysis complete. Output can be found at {self.working_dir_path}")
 
         
     def perform_enrichment_analysis(
@@ -194,6 +192,7 @@ class Wormcat:
             
         run_number = os.path.basename(base_dir_path)
         create_sunburst(base_dir_path,run_number)
+        print(f"Analysis complete. Output can be found at {self.working_dir_path}")
         
     def wormcat_batch(self,
             input_data: str, 
@@ -245,3 +244,4 @@ class Wormcat:
         wormcat_excel = WormcatExcel()
         working_dir_path = Path(self.working_dir_path)
         wormcat_excel.create_summary_spreadsheet(self.working_dir_path, annotation_file_path, f"{working_dir_path}/{working_dir_path.stem}.xlsx")
+        print(f"Analysis complete. Output can be found at {self.working_dir_path}")
