@@ -12,6 +12,7 @@ from wormcat3.bubble_chart import create_bubble_chart
 from wormcat3.sunburst import create_sunburst
 from wormcat3.wormcat_excel import WormcatExcel
 import wormcat3.constants as cs
+from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
 
 class Wormcat:
     """
@@ -29,9 +30,13 @@ class Wormcat:
         self.email = email
         self.title = title
         ### Create the working directory 
-        self.run_number = file_util.generate_5_digit_hash(prefix=title + "_")
-        working_dir_path = Path(working_dir_path) / self.run_number
-        self.working_dir_path = file_util.validate_directory_path(working_dir_path)
+        ### It is possible that when we generate the hash we have a conflict with a current output directory
+        ### If there is a conflict try again
+        is_validate_directory = False
+        while(not is_validate_directory):
+            self.run_number = file_util.generate_5_digit_hash(prefix=title + "_")
+            working_dir_path = Path(working_dir_path) / self.run_number
+            is_validate_directory, self.working_dir_path = file_util.validate_directory_path(working_dir_path, validation_indicator=True)
         
         # Setup annotation manager
         self.annotation_manager = AnnotationsManager(annotation_file_name)
@@ -55,16 +60,32 @@ class Wormcat:
         else:
             deseq2_df = deseq2_input
 
+        
         gsea_analyzer = GSEAAnalyzer(self.working_dir_path)
+        removed_rows_df, deseq2_df = gsea_analyzer.clean_input_data(deseq2_df)
+        
+        # Save the removed rows
+        if not removed_rows_df.empty:            
+            removed_file_name = f"genes_removed_from_analysis_{self.run_number}.csv"
+            removed_path = Path(self.working_dir_path) / removed_file_name
+            removed_rows_df.to_csv(removed_path, index=False)
+            
         ranked_list_df = gsea_analyzer.create_ranked_list(deseq2_df)
 
+        first_3_ids = ranked_list_df['Gene'].head(3).tolist()
+        gene_type = self.annotation_manager.get_gene_id_type(first_3_ids)
+        print(f"{gene_type=}")
+
+
         for category in [1,2,3]:
-            gmt_format = self.annotation_manager.category_to_gmt_format(category)
+            gmt_format = self.annotation_manager.category_to_gmt_format(category, id_col_nm=gene_type)
             results_name = f"gsea_category_{category}_{self.run_number}"
             results_df = gsea_analyzer.run_preranked_gsea(ranked_list_df , gmt_format, results_name)
             # Save the results_df
             gsea_category_path = Path(self.working_dir_path) / f"{results_name}.csv"
             results_df.to_csv(gsea_category_path, index=False)
+            
+        print(f"Analysis complete. output can be found at {self.working_dir_path}")
 
         
     def perform_enrichment_analysis(
@@ -89,7 +110,7 @@ class Wormcat:
             background_list = background_input
 
         if not isinstance(p_adjust_method, PAdjustMethod):
-            raise ValueError(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.")
+            raise Wormcat3Error(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE)
 
         assert 0 < p_adjust_threshold <= 1, "p_adjust_threshold must be between 0 and 1 (exclusive lower, inclusive upper)."
 
@@ -115,7 +136,7 @@ class Wormcat:
             background_list = self.annotation_manager.dedup_list(background_list)
             background_type = self.annotation_manager.get_gene_id_type(background_list)
             if background_type != gene_type:
-                raise ValueError("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}")
+                raise Wormcat3Error("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}", ErrorCode.CONSTRAINT_VIOLATION)
             background_df, background_not_annotated_df = self.annotation_manager.segment_genes_by_annotation_match(background_list, background_type)
 
             # Save the annotated background input
@@ -185,7 +206,7 @@ class Wormcat:
         
         # Check if path exists
         if not input_path.exists():
-            raise FileNotFoundError(f"Path not found: {input_data}")
+            raise Wormcat3Error(f"Path not found: {input_data}", ErrorCode.FILE_NOT_FOUND)
         
         if input_path.is_file():
                 # Check if it's an Excel file
@@ -211,7 +232,9 @@ class Wormcat:
         csv_files = list(csv_file_path.glob('*.csv'))  
         if csv_files:
             for file in csv_files:
-                wormcat = Wormcat(working_dir_path=self.working_dir_path,title=file.stem)
+                wormcat = Wormcat(working_dir_path = self.working_dir_path, 
+                                  annotation_file_name = self.annotation_manager.annotation_name(), 
+                                  title = file.stem)
                 wormcat.analyze_and_visualize_enrichment(str(file), background_input, p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
         else:
             print(f"Directory doesn't contain any CSV files: {input_path}")

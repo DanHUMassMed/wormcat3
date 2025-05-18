@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union, Dict, List
 import wormcat3.constants as cs
 from wormcat3 import file_util
-
+from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
 
 class GSEAAnalyzer:
     """
@@ -16,15 +16,14 @@ class GSEAAnalyzer:
     def __init__(self, output_dir: str = cs.DEFAULT_GSEA_RESULTS_DIR):
         """
         Initialize the GSEAAnalyzer.
-        
-        Parameters:
-        -----------
-        output_dir : str, optional
-            Directory where GSEA results will be saved, default is 'gsea_results'
         """
+        self.required_columns = ['ID', 'log2FoldChange', 'pvalue']
+
         self.output_dir = output_dir
         self._ensure_output_directory()
         self.results = None
+        #last_dir = Path(working_dir_path).name  # "output"
+        
     
     def _ensure_output_directory(self) -> None:
         """Create output directory if it doesn't exist."""
@@ -45,53 +44,18 @@ class GSEAAnalyzer:
                            verbose: bool = False) -> pd.DataFrame:
         """
         Perform pre-ranked GSEA analysis and return results as a DataFrame.
-        
-        Parameters:
-        -----------
-        ranked_genes : str or pd.DataFrame
-            Ranked gene list. Can be a file path or a pandas DataFrame with 'Gene' and 'Rank' columns.
-        gene_sets : str or dict
-            Gene sets to analyze. Can be a GMT file path or a dictionary.
-        min_size : int, optional
-            Minimum size of gene sets to analyze (default: 15).
-        max_size : int, optional
-            Maximum size of gene sets to analyze (default: 500).
-        permutation_num : int, optional
-            Number of permutations (default: 1000).
-        weighted_score_type : int, optional
-            Weight type for the score (0 or 1, default: 1).
-        seed : int, optional
-            Random seed for reproducibility (default: 123).
-        processes : int, optional
-            Number of processes to use (default: 4).
-        verbose : bool, optional
-            Whether to display detailed output (default: True).
-        
-        Returns:
-        --------
-        pd.DataFrame
-            DataFrame containing the GSEA results sorted by FDR.
-        
-        Raises:
-        -------
-        FileNotFoundError
-            If the gene_sets file doesn't exist.
-        ValueError
-            If ranked_genes DataFrame doesn't have required columns.
-        RuntimeError
-            If GSEA analysis fails.
         """
         # Validate inputs
         if isinstance(gene_sets, str) and not os.path.exists(gene_sets):
-            raise FileNotFoundError(f"Gene sets file not found: {gene_sets}")
+            raise Wormcat3Error(f"Gene sets file not found: {gene_sets}", ErrorCode.FILE_NOT_FOUND)
         
         if isinstance(ranked_genes, pd.DataFrame):
             required_columns = {'Gene', 'Rank'}
             if not required_columns.issubset(ranked_genes.columns):
-                raise ValueError(f"ranked_genes DataFrame must contain columns: {required_columns}")
+                raise Wormcat3Error(f"ranked_genes DataFrame must contain columns: {required_columns}", ErrorCode.MISSING_FIELD)
         
         outdir = file_util.validate_directory_path(Path(self.output_dir)/output_dir)
-        
+
         try:
             # Run pre-ranked GSEA
             prerank_results = gp.prerank(
@@ -132,29 +96,14 @@ class GSEAAnalyzer:
             return results_df
             
         except Exception as e:
-            raise RuntimeError(f"GSEA analysis failed: {str(e)}")
+            raise Wormcat3Error(f"GSEA analysis failed: {str(e)}", ErrorCode.INTERNAL_ERROR, origin="GSEAAnalyzer.run_preranked_gsea")
     
     def get_enriched_terms(self, fdr_threshold: float = 0.25) -> pd.DataFrame:
         """
         Extract significantly enriched terms based on FDR threshold.
-        
-        Parameters:
-        -----------
-        fdr_threshold : float, optional
-            FDR threshold for significance (default: 0.25).
-        
-        Returns:
-        --------
-        pd.DataFrame
-            DataFrame containing only significant terms.
-        
-        Raises:
-        -------
-        ValueError
-            If no analysis has been run yet.
         """
         if self.results is None:
-            raise ValueError("No GSEA analysis has been run yet. Call run_preranked_gsea first.")
+            raise Wormcat3Error("No GSEA analysis has been run yet. Call run_preranked_gsea first.", ErrorCode.CONSTRAINT_VIOLATION)
         
         results_df = self.run_preranked_gsea(None, None)  # This will reuse stored results
         return results_df[results_df['FDR'] <= fdr_threshold]
@@ -162,59 +111,24 @@ class GSEAAnalyzer:
     def get_leading_edge_genes(self, term: str) -> List[str]:
         """
         Extract leading edge genes for a specific term.
-        
-        Parameters:
-        -----------
-        term : str
-            The pathway or gene set term.
-        
-        Returns:
-        --------
-        List[str]
-            List of leading edge genes.
-        
-        Raises:
-        -------
-        ValueError
-            If no analysis has been run or term doesn't exist.
         """
         if self.results is None:
-            raise ValueError("No GSEA analysis has been run yet. Call run_preranked_gsea first.")
+            raise Wormcat3Error("No GSEA analysis has been run yet. Call run_preranked_gsea first.", ErrorCode.CONSTRAINT_VIOLATION)
         
         if term not in self.results.results:
-            raise ValueError(f"Term '{term}' not found in GSEA results.")
+            raise Wormcat3Error(f"Term '{term}' not found in GSEA results.", ErrorCode.INVALID_VALUE)
         
         return self.results.results[term]['lead_genes']
 
-    @staticmethod
-    def create_ranked_list(deseq2_output_df):
+
+    def create_ranked_list(self, deseq2_output_df):
         """
         Generates a ranked gene list from DESeq2 differential expression results.
         
         The ranking score is calculated as: sign(log2FoldChange) * -log10(pvalue)
         This produces a score that considers both the direction and magnitude of change,
         as well as the statistical significance.
-        
-        Parameters:
-        -----------
-        deseq2_output_df : pd.DataFrame
-            DataFrame containing DESeq2 results with required columns:
-            - 'ID': Gene identifiers
-            - 'log2FoldChange': Log2 fold change values
-            - 'pvalue': P-values indicating statistical significance
-        
-        Returns:
-        --------
-        pd.DataFrame
-            DataFrame with 'Gene' and 'Rank' columns, sorted by 'Rank' 
-            in descending order (most upregulated and significant genes at the top).
-        
-        Raises:
-        -------
-        ValueError
-            If the input DataFrame doesn't contain the required columns.
-        AssertionError
-            If input data doesn't meet expected format or contains invalid values.
+
         """
         # Input validation
         assert isinstance(deseq2_output_df, pd.DataFrame), "Input must be a pandas DataFrame"
@@ -224,10 +138,9 @@ class GSEAAnalyzer:
         deseq2_copy = deseq2_output_df.copy()
         
         # Ensure required columns are present
-        required_columns = {'ID', 'log2FoldChange', 'pvalue'}
-        missing_columns = required_columns - set(deseq2_copy.columns)
+        missing_columns = set(self.required_columns) - set(deseq2_copy.columns)
         if missing_columns:
-            raise ValueError(f"Input DataFrame is missing required columns: {missing_columns}")
+            raise Wormcat3Error(f"Input DataFrame is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD)
         
         # Validate identifier column
         assert not deseq2_copy['ID'].isna().any(), "Column 'ID' contains NaN values, which are not allowed for identifiers"
@@ -265,7 +178,6 @@ class GSEAAnalyzer:
         
         ranked_list = GSEAAnalyzer._make_ranks_unique(ranked_list)
         
-        #######
         # Check for duplicates in the 'Gene' column
         duplicate_genes = ranked_list[ranked_list['Gene'].duplicated(keep=False)]
 
@@ -277,8 +189,6 @@ class GSEAAnalyzer:
             # Count total percentage of duplicated genes
             duplicate_percent = (len(duplicate_genes) / len(ranked_list)) * 100
             print(f"Duplicated genes represent {duplicate_percent:.2f}% of the dataset")
-        else:
-            print("No duplicate genes found in the ranked list.")
 
         # Remove duplicates, keeping the entry with the highest rank for each gene
         # Since the list is already sorted by Rank (descending), we keep the first occurrence
@@ -287,8 +197,6 @@ class GSEAAnalyzer:
         # Verify duplicates were removed
         assert ranked_list_no_duplicates['Gene'].duplicated().sum() == 0, "Duplicates still exist!"
 
-        #######
-        
         # Final validation of output
         assert ranked_list.shape[0] == deseq2_copy.shape[0], "Output has different number of rows than input"
         
@@ -299,16 +207,6 @@ class GSEAAnalyzer:
         """
         Check for duplicates in the 'Rank' column and make them unique by adding small values
         that won't change the overall sorting order.
-        
-        Parameters:
-        -----------
-        ranked_list : pandas.DataFrame
-            DataFrame containing 'Gene' and 'Rank' columns, sorted by 'Rank' in descending order
-            
-        Returns:
-        --------
-        pandas.DataFrame
-            DataFrame with unique rank values, maintaining original sorting order
         """
         # Check for duplicates in the 'Rank' column
         duplicate_ranks = ranked_list['Rank'].duplicated(keep=False)
@@ -351,4 +249,42 @@ class GSEAAnalyzer:
             print("No duplicate Rank values found")
             
         return ranked_list
+    
 
+    def clean_input_data(self, deseq2_df: pd.DataFrame):
+        """
+        Clean a DESeq2-like DataFrame by removing rows with NaNs in key columns
+        and duplicate IDs (keeping the one with the lowest pvalue).
+
+        Args:
+            deseq2_df (pd.DataFrame): The input DataFrame with columns 'ID', 'log2FoldChange', 'pvalue'.
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame]: (removed_rows_df, cleaned_deseq2_df)
+        """
+        # Ensure required columns are present
+        missing_columns = set(self.required_columns) - set(deseq2_df.columns)
+        if missing_columns:
+            raise Wormcat3Error(
+                f"Input DataFrame is missing required columns: {missing_columns}",
+                ErrorCode.MISSING_FIELD
+            )
+
+        # Step 1: Remove rows with NaNs in key columns
+        na_mask = deseq2_df[self.required_columns].isna().any(axis=1)
+        na_removed_df = deseq2_df[na_mask].copy()
+        na_removed_df['reason'] = 'has_na'
+        no_na_df = deseq2_df[~na_mask]
+
+        # Step 2: Remove duplicates by keeping row with lowest pvalue
+        sorted_df = no_na_df.sort_values('pvalue', ascending=True)
+        dedup_df = sorted_df.drop_duplicates(subset='ID', keep='first')
+
+        # Identify duplicates that were removed (not already marked as NaN)
+        removed_duplicates_df = sorted_df[~sorted_df.index.isin(dedup_df.index)].copy()
+        removed_duplicates_df['reason'] = 'duplicate'
+
+        # Combine all removed rows with reason
+        removed_rows_df = pd.concat([na_removed_df, removed_duplicates_df], ignore_index=True)
+
+        return removed_rows_df, dedup_df

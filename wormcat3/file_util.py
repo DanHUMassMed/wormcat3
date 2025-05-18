@@ -4,22 +4,29 @@ from pathlib import Path
 import pandas as pd
 import re
 import zipfile
+from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
 
-def validate_directory_path(directory_path, not_empty_check = True):
+def validate_directory_path(directory_path, validation_indicator=False, not_empty_check = True):
     """
     Ensure the directory exists and is empty or can be created.
     Returns the validated path.
     """
     path = Path(directory_path)
+
     if path.exists():
-        if path.is_dir():
-            if not_empty_check and any(path.iterdir()):  # Directory is not empty
-                raise ValueError(f"The directory '{path}' exists and is not empty.")
-        else:
-            raise ValueError(f"The path '{path}' exists and is not a directory.")
+        if not path.is_dir():
+            return (False, str(path)) if validation_indicator else str(path)
+        if not_empty_check and any(path.iterdir()):
+            return (False, str(path)) if validation_indicator else str(path)
     else:
-        path.mkdir(parents=True)
-    return str(path)
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            print(f"[Error] Failed to create directory '{path}': {e}")
+            return (False, str(path)) if validation_indicator else str(path)
+
+    return (True, str(path)) if validation_indicator else str(path)
+
 
 def find_file_path(file_name, additional_search_paths=[]):
     """Search for a file in the given list of directories."""
@@ -44,11 +51,18 @@ def find_file_path(file_name, additional_search_paths=[]):
             return str(file_path)  # Return the first found file path
     return None  # File not found in any directory
 
+def get_name_from_file_path(file_path):
+    # Get the base name of the file (without directory and extension)
+    if isinstance(file_path, (str, os.PathLike)) and file_path:
+        return os.path.splitext(os.path.basename(file_path))[0]
+    else:
+        return "[NO_NAME_FOUND]"
+        
 def read_deseq2_file(file_path):
     """Read deseq2 file"""
     
     if not Path(file_path).exists():
-        raise FileNotFoundError(f"The file {file_path} does not exist.")
+        raise Wormcat3Error(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND)
     
     # Read the CSV file into a DataFrame
     deseq2_df = pd.read_csv(file_path)
@@ -57,7 +71,7 @@ def read_deseq2_file(file_path):
     required_columns = {'ID', 'log2FoldChange', 'pvalue'}
     missing_columns = required_columns - set(deseq2_df.columns)
     if missing_columns:
-        raise ValueError(f"Input DESeq2 Dataframe is missing required columns: {missing_columns}")
+        raise Wormcat3Error(f"{get_name_from_file_path(file_path)} file is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD)
     
     return deseq2_df
 
@@ -66,7 +80,7 @@ def read_gene_set_file(file_path):
     """Read the first column of a CSV file as a list."""
     
     if not Path(file_path).exists():
-        raise FileNotFoundError(f"The file {file_path} does not exist.")
+        raise Wormcat3Error(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND)
     
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
@@ -110,7 +124,7 @@ def extract_run_number(data_file_nm):
         run_number = match.group(1)  # Extract the 5-digit run number
         return run_number
     else:
-        raise ValueError(f"Invalid file name: {data_file_nm}. It must end with 'run_00000.csv' where '00000' are any 5 digits.")
+        raise Wormcat3Error(f"Invalid file name: {data_file_nm}. It must end with 'run_?????.csv' where '?????' are any 5 digits.", ErrorCode.INVALID_NAME)
 
 
 def zip_dir(path, output_zip_path=None):

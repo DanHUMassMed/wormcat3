@@ -7,19 +7,10 @@ from pathlib import Path
 from typing import List, Dict, Union, Any, Optional, Tuple, Set
 import warnings
 from wormcat3 import file_util
+from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
 
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
-
-class ExcelConversionError(Exception):
-    """Custom exception for Excel to CSV conversion errors"""
-    pass
-
-
-class CategoryProcessingError(Exception):
-    """Custom exception for errors during category processing"""
-    pass
 
 
 class WormcatExcel:
@@ -72,7 +63,7 @@ class WormcatExcel:
         """
         # Validate inputs
         if not os.path.exists(excel_path):
-            raise FileNotFoundError(f"Excel file not found at path: {excel_path}")
+            raise Wormcat3Error(f"Excel file not found at path: {excel_path}", ErrorCode.FILE_NOT_FOUND)
         
         csv_file_path = file_util.validate_directory_path(csv_file_path)
         
@@ -80,9 +71,9 @@ class WormcatExcel:
         try:
             input_excel = pd.ExcelFile(excel_path)
         except ValueError:
-            raise ExcelConversionError(f"File [{excel_path}] is not a valid Excel file.")
+            raise Wormcat3Error(f"File [{excel_path}] is not a valid Excel file.", ErrorCode.INVALID_FILE)
         except Exception as e:
-            raise ExcelConversionError(f"Failed to open Excel file: {str(e)}")
+            raise Wormcat3Error(f"Failed to open Excel file: {str(e)}", ErrorCode.INTERNAL_ERROR)
 
         # Process each sheet
         results = {}
@@ -95,7 +86,7 @@ class WormcatExcel:
                 
             return results
         except Exception as e:
-            raise ExcelConversionError(f"Failed during conversion process: {str(e)}")
+            raise Wormcat3Error(f"Failed during conversion process: {str(e)}", ErrorCode.INTERNAL_ERROR)
         
     def create_summary_spreadsheet(self, wormcat_out_path: str, 
                                   annotation_file: str, 
@@ -115,7 +106,7 @@ class WormcatExcel:
         """
         wormcat_path = Path(wormcat_out_path)
         if not wormcat_path.exists():
-            raise FileNotFoundError(f"Wormcat output path not found: {wormcat_out_path}")
+            raise Wormcat3Error(f"Wormcat output path not found: {wormcat_out_path}", ErrorCode.FILE_NOT_FOUND)
         
         process_lst = self._collect_category_files(wormcat_path)
             
@@ -140,7 +131,7 @@ class WormcatExcel:
             DataFrame with category values and their counts, sorted by category name
         """
         if category_name not in data.columns:
-            raise ValueError(f"Category '{category_name}' not found in data columns")
+            raise Wormcat3Error(f"Category '{category_name}' not found in data columns", ErrorCode.INVALID_VALUE)
             
         category = data[category_name].value_counts()
         category = pd.DataFrame({
@@ -186,7 +177,7 @@ class WormcatExcel:
         """
         file_name = row['file']
         if not Path(file_name).exists():
-            raise FileNotFoundError(f"Category file not found: {file_name}")
+            raise Wormcat3Error(f"Category file not found: {file_name}", ErrorCode.FILE_NOT_FOUND)
             
         try:
             label_category = f"Category {row['category']}"
@@ -218,7 +209,7 @@ class WormcatExcel:
             
             return sheet
         except Exception as e:
-            raise CategoryProcessingError(f"Error processing file {file_name}: {str(e)}")
+            raise Wormcat3Error(f"Error processing file {file_name}: {str(e)}", ErrorCode.INTERNAL_ERROR)
 
     # Excel formatting methods
     def _get_excel_formats(self, writer: pd.ExcelWriter) -> List[Any]:
@@ -310,7 +301,7 @@ class WormcatExcel:
         """
         annotation_path = Path(annotation_file)
         if not annotation_path.exists():
-            raise FileNotFoundError(f"Annotation file not found: {annotation_file}")
+            raise Wormcat3Error(f"Annotation file not found: {annotation_file}", ErrorCode.FILE_NOT_FOUND)
         
         try:
             # Load annotation data

@@ -4,6 +4,7 @@ from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 import wormcat3.constants as cs
 from wormcat3.constants import PAdjustMethod
+from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
     
 class EnrichmentAnalyzer:
     """Performs statistical enrichment analysis."""
@@ -88,7 +89,7 @@ class EnrichmentAnalyzer:
         """Adjust p-values using the specified method."""
         
         if method not in {'bonferroni', 'fdr_bh'}:
-            raise ValueError("Invalid method. Choose either 'bonferroni' or 'fdr_bh'.")
+            raise Wormcat3Error("Invalid method. Choose either 'bonferroni' or 'fdr_bh'.", ErrorCode.INVALID_VALUE)
         
         padj_col = 'Bonferroni' if method == 'bonferroni' else 'FDR'
         
