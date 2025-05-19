@@ -108,7 +108,7 @@ class Wormcat:
             background_list = background_input
 
         if not isinstance(p_adjust_method, PAdjustMethod):
-            raise Wormcat3Error(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE)
+            raise Wormcat3Error(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE.to_dict())
 
         assert 0 < p_adjust_threshold <= 1, "p_adjust_threshold must be between 0 and 1 (exclusive lower, inclusive upper)."
 
@@ -134,7 +134,8 @@ class Wormcat:
             background_list = self.annotation_manager.dedup_list(background_list)
             background_type = self.annotation_manager.get_gene_id_type(background_list)
             if background_type != gene_type:
-                raise Wormcat3Error("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}", ErrorCode.CONSTRAINT_VIOLATION)
+                raise Wormcat3Error("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}", 
+                                    ErrorCode.CONSTRAINT_VIOLATION.to_dict())
             background_df, background_not_annotated_df = self.annotation_manager.segment_genes_by_annotation_match(background_list, background_type)
 
             # Save the annotated background input
@@ -205,7 +206,7 @@ class Wormcat:
         
         # Check if path exists
         if not input_path.exists():
-            raise Wormcat3Error(f"Path not found: {input_data}", ErrorCode.FILE_NOT_FOUND)
+            raise Wormcat3Error(f"Path not found: {input_data}", ErrorCode.FILE_NOT_FOUND.to_dict())
         
         if input_path.is_file():
                 # Check if it's an Excel file

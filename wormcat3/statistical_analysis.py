@@ -88,7 +88,7 @@ class EnrichmentAnalyzer:
         """Adjust p-values using the specified method."""
         
         if method not in {'bonferroni', 'fdr_bh'}:
-            raise Wormcat3Error("Invalid method. Choose either 'bonferroni' or 'fdr_bh'.", ErrorCode.INVALID_VALUE)
+            raise Wormcat3Error("Invalid method. Choose either 'bonferroni' or 'fdr_bh'.", ErrorCode.INVALID_VALUE.to_dict())
         
         padj_col = 'Bonferroni' if method == 'bonferroni' else 'FDR'
         

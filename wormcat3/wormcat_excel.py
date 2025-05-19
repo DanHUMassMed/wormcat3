@@ -63,7 +63,7 @@ class WormcatExcel:
         """
         # Validate inputs
         if not os.path.exists(excel_path):
-            raise Wormcat3Error(f"Excel file not found at path: {excel_path}", ErrorCode.FILE_NOT_FOUND)
+            raise Wormcat3Error(f"Excel file not found at path: {excel_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
         
         csv_file_path = file_util.validate_directory_path(csv_file_path)
         
@@ -71,9 +71,9 @@ class WormcatExcel:
         try:
             input_excel = pd.ExcelFile(excel_path)
         except ValueError:
-            raise Wormcat3Error(f"File [{excel_path}] is not a valid Excel file.", ErrorCode.INVALID_FILE)
+            raise Wormcat3Error(f"File [{excel_path}] is not a valid Excel file.", ErrorCode.INVALID_FILE.to_dict())
         except Exception as e:
-            raise Wormcat3Error(f"Failed to open Excel file: {str(e)}", ErrorCode.INTERNAL_ERROR)
+            raise Wormcat3Error(f"Failed to open Excel file: {str(e)}", ErrorCode.INTERNAL_ERROR.to_dict())
 
         # Process each sheet
         results = {}
@@ -86,7 +86,7 @@ class WormcatExcel:
                 
             return results
         except Exception as e:
-            raise Wormcat3Error(f"Failed during conversion process: {str(e)}", ErrorCode.INTERNAL_ERROR)
+            raise Wormcat3Error(f"Failed during conversion process: {str(e)}", ErrorCode.INTERNAL_ERROR.to_dict())
         
     def create_summary_spreadsheet(self, wormcat_out_path: str, 
                                   annotation_file: str, 
@@ -106,7 +106,7 @@ class WormcatExcel:
         """
         wormcat_path = Path(wormcat_out_path)
         if not wormcat_path.exists():
-            raise Wormcat3Error(f"Wormcat output path not found: {wormcat_out_path}", ErrorCode.FILE_NOT_FOUND)
+            raise Wormcat3Error(f"Wormcat output path not found: {wormcat_out_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
         
         process_lst = self._collect_category_files(wormcat_path)
             
@@ -131,7 +131,7 @@ class WormcatExcel:
             DataFrame with category values and their counts, sorted by category name
         """
         if category_name not in data.columns:
-            raise Wormcat3Error(f"Category '{category_name}' not found in data columns", ErrorCode.INVALID_VALUE)
+            raise Wormcat3Error(f"Category '{category_name}' not found in data columns", ErrorCode.INVALID_VALUE.to_dict())
             
         category = data[category_name].value_counts()
         category = pd.DataFrame({
@@ -177,7 +177,7 @@ class WormcatExcel:
         """
         file_name = row['file']
         if not Path(file_name).exists():
-            raise Wormcat3Error(f"Category file not found: {file_name}", ErrorCode.FILE_NOT_FOUND)
+            raise Wormcat3Error(f"Category file not found: {file_name}", ErrorCode.FILE_NOT_FOUND.to_dict())
             
         try:
             label_category = f"Category {row['category']}"
@@ -209,7 +209,7 @@ class WormcatExcel:
             
             return sheet
         except Exception as e:
-            raise Wormcat3Error(f"Error processing file {file_name}: {str(e)}", ErrorCode.INTERNAL_ERROR)
+            raise Wormcat3Error(f"Error processing file {file_name}: {str(e)}", ErrorCode.INTERNAL_ERROR.to_dict())
 
     # Excel formatting methods
     def _get_excel_formats(self, writer: pd.ExcelWriter) -> List[Any]:
@@ -300,7 +300,7 @@ class WormcatExcel:
         """
         annotation_path = Path(annotation_file)
         if not annotation_path.exists():
-            raise Wormcat3Error(f"Annotation file not found: {annotation_file}", ErrorCode.FILE_NOT_FOUND)
+            raise Wormcat3Error(f"Annotation file not found: {annotation_file}", ErrorCode.FILE_NOT_FOUND.to_dict())
         
         try:
             # Load annotation data

@@ -49,15 +49,18 @@ class ErrorCode(Enum):
     # 9xx - Unknown / Other Errors
     UNKNOWN_ERROR = 901             # No known cause, catch-all
     NOT_IMPLEMENTED = 902           # Placeholder for unimplemented feature
+    
+    def to_dict(self):
+        return {"value": self.value, "name": self.name}
 
 
 class Wormcat3Error(Exception):
     """General-purpose error for Wormcat3 operations."""
 
-    def __init__(self, message: str, code: ErrorCode, origin: str = "", detail: dict = None):
+    def __init__(self, message: str, code: dict, origin: str = "", detail: dict = None):
         self.message = message
-        self.code_value = code.value  # int for downstream
-        self.code_name = code.name    # str for logs, JSON, etc.
+        self.code_value = code['value']    # int for downstream
+        self.code_name = code['name']    # str for logs, JSON, etc.
         self.origin = origin
         if detail is None:
             detail = {}

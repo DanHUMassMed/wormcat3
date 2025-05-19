@@ -62,7 +62,7 @@ def read_deseq2_file(file_path):
     """Read deseq2 file"""
     
     if not Path(file_path).exists():
-        raise Wormcat3Error(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND)
+        raise Wormcat3Error(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
     
     # Read the CSV file into a DataFrame
     deseq2_df = pd.read_csv(file_path)
@@ -71,7 +71,7 @@ def read_deseq2_file(file_path):
     required_columns = {'ID', 'log2FoldChange', 'pvalue'}
     missing_columns = required_columns - set(deseq2_df.columns)
     if missing_columns:
-        raise Wormcat3Error(f"{get_name_from_file_path(file_path)} file is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD)
+        raise Wormcat3Error(f"{get_name_from_file_path(file_path)} file is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
     
     return deseq2_df
 
@@ -80,13 +80,22 @@ def read_gene_set_file(file_path):
     """Read the first column of a CSV file as a list."""
     
     if not Path(file_path).exists():
-        raise Wormcat3Error(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND)
-    
-    # Read the CSV file into a DataFrame
-    df = pd.read_csv(file_path)
-    
-    # Extract the first column as a list
-    return df.iloc[:, 0].tolist()
+        raise Wormcat3Error(
+            message=f"Attempting to read a non-existent file: {file_path}",
+            code=ErrorCode.FILE_NOT_FOUND.to_dict(),
+            origin="read_gene_set_file"
+        )
+
+    try:
+        df = pd.read_csv(file_path)
+        return df.iloc[:, 0].tolist()
+    except Exception as e:
+        raise Wormcat3Error(
+            message=f"Unexpected error while reading file: {file_path}",
+            code=ErrorCode.INTERNAL_ERROR.to_dict(),
+            origin="read_gene_set_file",
+            detail={"error": str(e)}
+        )
 
 def is_file_path(input_string: str) -> bool:
     """
@@ -124,7 +133,8 @@ def extract_run_number(data_file_nm):
         run_number = match.group(1)  # Extract the 5-digit run number
         return run_number
     else:
-        raise Wormcat3Error(f"Invalid file name: {data_file_nm}. It must end with 'run_?????.csv' where '?????' are any 5 digits.", ErrorCode.INVALID_NAME)
+        raise Wormcat3Error(f"Invalid file name: {data_file_nm}. It must end with 'run_?????.csv' where '?????' are any 5 digits.", 
+                            ErrorCode.INVALID_NAME.to_dict())
 
 
 def zip_dir(path, output_zip_path=None):

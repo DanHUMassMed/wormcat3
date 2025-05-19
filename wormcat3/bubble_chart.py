@@ -93,13 +93,13 @@ def preprocess_bubble_data(data_file_path, add_calibration=False):
         return bubbles_data
         
     except FileNotFoundError:
-        raise Wormcat3Error(f"CSV file not found: {data_file_path}", ErrorCode.FILE_NOT_FOUND)
+        raise Wormcat3Error(f"CSV file not found: {data_file_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
     except pd.errors.EmptyDataError:
-        raise Wormcat3Error(f"The CSV file is empty: {data_file_path}", ErrorCode.FILE_LOAD_FAILED)
+        raise Wormcat3Error(f"The CSV file is empty: {data_file_path}", ErrorCode.FILE_LOAD_FAILED.to_dict())
     except pd.errors.ParserError:
-        raise Wormcat3Error(f"Error parsing CSV file: {data_file_path}", ErrorCode.FILE_LOAD_FAILED)
+        raise Wormcat3Error(f"Error parsing CSV file: {data_file_path}", ErrorCode.FILE_LOAD_FAILED.to_dict())
     except KeyError as e:
-        raise Wormcat3Error(f"Required column missing in CSV file: {e}", ErrorCode.FILE_LOAD_FAILED)
+        raise Wormcat3Error(f"Required column missing in CSV file: {e}", ErrorCode.FILE_LOAD_FAILED.to_dict())
 
 
 def order_categories_by_column(df, category_column='Category', order_by_column='PValue', ascending=True):
@@ -116,13 +116,13 @@ def order_categories_by_column(df, category_column='Category', order_by_column='
         pd.DataFrame: DataFrame with category column converted to categorical type.
     """
     if df is None or df.empty:
-        raise Wormcat3Error("DataFrame is empty or None", ErrorCode.INVALID_STATE)
+        raise Wormcat3Error("DataFrame is empty or None", ErrorCode.INVALID_STATE.to_dict())
         
     if category_column not in df.columns:
-        raise Wormcat3Error(f"Category column '{category_column}' not found in DataFrame",ErrorCode.INVALID_STATE)
+        raise Wormcat3Error(f"Category column '{category_column}' not found in DataFrame",ErrorCode.INVALID_STATE.to_dict())
         
     if order_by_column not in df.columns:
-        raise Wormcat3Error(f"Order column '{order_by_column}' not found in DataFrame",ErrorCode.INVALID_STATE)
+        raise Wormcat3Error(f"Order column '{order_by_column}' not found in DataFrame",ErrorCode.INVALID_STATE.to_dict())
     
     # Sort the dataframe by the specified column
     sorted_df = df.sort_values(by=order_by_column, ascending=ascending)
@@ -145,12 +145,12 @@ def generate_bubble_plot(df, svg_file_path, plot_title=cs.DEFAULT_TITLE, width=c
 
     """
     if df is None or df.empty:
-        raise Wormcat3Error("DataFrame is empty or None", ErrorCode.INVALID_STATE)
+        raise Wormcat3Error("DataFrame is empty or None", ErrorCode.INVALID_STATE.to_dict())
         
     required_columns = ['Category', 'bubbles_z', 'RGS_size', 'p_value_type']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
-        raise Wormcat3Error(f"Required columns missing in DataFrame: {missing_columns}", ErrorCode.MISSING_FIELD)
+        raise Wormcat3Error(f"Required columns missing in DataFrame: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
 
     # Define color and size mapping dictionaries
     color_mapping = {
@@ -214,7 +214,7 @@ def generate_bubble_plot(df, svg_file_path, plot_title=cs.DEFAULT_TITLE, width=c
     try:
         p.save(filename=svg_file_path, format = "svg", width = width, height = height)
     except Exception as e:
-        raise Wormcat3Error(f"Failed to save plot: {e}", ErrorCode.INTERNAL_ERROR)
+        raise Wormcat3Error(f"Failed to save plot: {e}", ErrorCode.INTERNAL_ERROR.to_dict())
 
 
 def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS", add_calibration=False) -> None:
