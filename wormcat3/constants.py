@@ -17,7 +17,7 @@ DEFAULT_WORKING_DIR_PATH = "./wormcat_out"
 DEFAULT_RUN_PREFIX = "run"
 
 # Annotations Management Configuration
-DEFAULT_P_ADJUST_THRESHOLD = 0.10
+DEFAULT_P_ADJUST_THRESHOLD = 0.05
 DEFAULT_ANNOTATION_FILE_NAME = "whole_genome_v2_nov-11-2021.csv"
 
 # Gene Set Enrichment Analysis

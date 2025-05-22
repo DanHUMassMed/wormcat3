@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION_FILE="setup.py" 
+VERSION_FILE="wormcat3/__init__.py" 
 
 # Get current version
 VERSION=$(grep "__version__" $VERSION_FILE | cut -d'"' -f2)
@@ -17,6 +17,9 @@ echo "Bumping version: $VERSION → $NEW_VERSION"
 
 # Update __init__.py
 sed -i '' "s/__version__ = .*/__version__ = \"$NEW_VERSION\"/" $VERSION_FILE
+sed -i '' "s/__version__ = .*/__version__ = \"$NEW_VERSION\"/" setup.py
+
+# Build distribution
 
 
 rm -rf ./dist
@@ -31,7 +34,7 @@ if echo "$CHECK_OUTPUT" | grep -q "PASSED"; then
     echo "Twine check passed, uploading to PyPI..."
     twine upload --repository pypi dist/*
 
-        # Git commit, tag, and push
+    # Git commit, tag, and push
     git add "$VERSION_FILE"
     git commit -m "Bump version to $NEW_VERSION"
     git tag "v$NEW_VERSION"

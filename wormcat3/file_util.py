@@ -79,9 +79,10 @@ def read_deseq2_file(file_path):
 def read_gene_set_file(file_path):
     """Read the first column of a CSV file as a list."""
     
-    if not Path(file_path).exists():
+    path = Path(file_path)
+    if not path.is_file():
         raise Wormcat3Error(
-            message=f"Attempting to read a non-existent file: {file_path}",
+            message=f"Attempting to read a non-existent or invalid file: {file_path}",
             code=ErrorCode.FILE_NOT_FOUND.to_dict(),
             origin="read_gene_set_file"
         )

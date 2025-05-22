@@ -5,3 +5,4 @@ gseapy==1.1.8
 plotnine==0.14.5
 statsmodels==0.14.4
 XlsxWriter==3.2.2
+openpyxl==3.1.5

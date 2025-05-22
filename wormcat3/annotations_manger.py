@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+from pathlib import Path
 from wormcat3 import file_util
 import wormcat3.constants as cs
 from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
@@ -33,6 +34,35 @@ class AnnotationsManager:
             raise Wormcat3Error(f"Failed to load annotation file: {e}", 
                                 ErrorCode.FILE_LOAD_FAILED.to_dict(), 
                                 origin="AnnotationsManager._load_annotations")
+            
+    @staticmethod
+    def available_annotation_files():
+        """
+        Return a list of .csv file names located in:
+        - the 'extdata' directory (next to this script), and
+        - the directory defined by the WORMCAT_DATA_PATH environment variable (if set).
+        """
+        file_path = Path(__file__).resolve()
+        extdata_path = file_path.parent / "extdata"
+
+        search_dirs = [extdata_path]
+
+        env_path = os.environ.get("WORMCAT_DATA_PATH")
+        if env_path:
+            env_path = Path(env_path)
+            if env_path.exists() and env_path.is_dir():
+                search_dirs.append(env_path)
+
+        found_files = set()
+
+        for directory in search_dirs:
+            if directory.exists():
+                for f in directory.glob("*.csv"):
+                    if f.is_file():
+                        found_files.add(f.name)
+
+        return sorted(found_files)
+
     
     def annotation_name(self):
         # Get the base name of the file (with extension, no directory)

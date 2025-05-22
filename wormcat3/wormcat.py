@@ -82,7 +82,14 @@ class Wormcat:
             # Save the results_df
             gsea_category_path = Path(self.working_dir_path) / f"{results_name}.csv"
             results_df.to_csv(gsea_category_path, index=False)
-            
+        
+        run_params = {
+            "Email":self.email,
+            "Title":self.title,
+            "Annotation File":self.annotation_manager.annotation_name(),
+            }
+        self._run_params(run_params)
+        
         print(f"Analysis complete. Output can be found at {self.working_dir_path}")
 
         
@@ -97,21 +104,29 @@ class Wormcat:
         )-> List[Dict[str, pd.DataFrame]]:
         """Perform enrichment test on the gene set."""
         
-        if isinstance(gene_set_input, str):
-            gene_set_list = file_util.read_gene_set_file(gene_set_input)
-        else:
+        if isinstance(gene_set_input, (str, Path)):
+            gene_set_list = file_util.read_gene_set_file(Path(gene_set_input))
+        elif isinstance(gene_set_input, list):
             gene_set_list = gene_set_input
-        
-        if isinstance(background_input, str):
-            background_list = file_util.read_gene_set_file(background_input)
         else:
-            background_list = background_input
+            raise Wormcat3Error(
+                "Invalid type: gene_set_input must be a file name or a list",
+                ErrorCode.INVALID_TYPE.to_dict()
+                )
 
-        if not isinstance(p_adjust_method, PAdjustMethod):
-            raise Wormcat3Error(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE.to_dict())
-
-        assert 0 < p_adjust_threshold <= 1, "p_adjust_threshold must be between 0 and 1 (exclusive lower, inclusive upper)."
-
+        if background_input is not None:
+            if isinstance(background_input, (str, Path)):
+                background_list = file_util.read_gene_set_file(Path(background_input))
+            elif isinstance(background_input, list):
+                background_list = background_input
+            else:
+                raise Wormcat3Error(
+                    "Invalid type: background_list must be a file name or a list",
+                    ErrorCode.INVALID_TYPE.to_dict()
+                    )
+        else:
+            background_list = None
+        
         
         # Preprocess gene set list
         gene_set_list = self.annotation_manager.dedup_list(gene_set_list)

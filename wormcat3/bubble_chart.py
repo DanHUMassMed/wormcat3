@@ -116,13 +116,13 @@ def order_categories_by_column(df, category_column='Category', order_by_column='
         pd.DataFrame: DataFrame with category column converted to categorical type.
     """
     if df is None or df.empty:
-        raise Wormcat3Error("DataFrame is empty or None", ErrorCode.INVALID_STATE.to_dict())
+        raise Wormcat3Error("While creating bubble plot found DataFrame empty or None", ErrorCode.INVALID_STATE.to_dict())
         
     if category_column not in df.columns:
-        raise Wormcat3Error(f"Category column '{category_column}' not found in DataFrame",ErrorCode.INVALID_STATE.to_dict())
+        raise Wormcat3Error(f"While creating bubble plot required column '{category_column}' not found in DataFrame",ErrorCode.INVALID_STATE.to_dict())
         
     if order_by_column not in df.columns:
-        raise Wormcat3Error(f"Order column '{order_by_column}' not found in DataFrame",ErrorCode.INVALID_STATE.to_dict())
+        raise Wormcat3Error(f"While creating bubble plot required column '{order_by_column}' not found in DataFrame",ErrorCode.INVALID_STATE.to_dict())
     
     # Sort the dataframe by the specified column
     sorted_df = df.sort_values(by=order_by_column, ascending=ascending)
@@ -145,12 +145,12 @@ def generate_bubble_plot(df, svg_file_path, plot_title=cs.DEFAULT_TITLE, width=c
 
     """
     if df is None or df.empty:
-        raise Wormcat3Error("DataFrame is empty or None", ErrorCode.INVALID_STATE.to_dict())
+        raise Wormcat3Error("While Generating Bubble Plot found DataFrame empty or None", ErrorCode.INVALID_STATE.to_dict())
         
     required_columns = ['Category', 'bubbles_z', 'RGS_size', 'p_value_type']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
-        raise Wormcat3Error(f"Required columns missing in DataFrame: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
+        raise Wormcat3Error(f"While Generating Bubble Plot found required columns missing in DataFrame: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
 
     # Define color and size mapping dictionaries
     color_mapping = {
@@ -235,9 +235,4 @@ def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS", add_
         print(f"Error: {e}")
 
 
-if __name__ == "__main__":
-    dir_path="/Users/dan/Code/Python/wormcat3/notebooks/wormcat_out/EC-ES-UP_73980"
-    data_file_nm= "category_2_padj_bon_EC-ES-UP_73980.csv"
-
-    create_bubble_chart(dir_path, data_file_nm, plot_title="Category 2 Up")
     

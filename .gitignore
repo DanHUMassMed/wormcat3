@@ -15,6 +15,7 @@ orouke_cell_type_group/
 orouke/
 dist/
 wormcat3.egg-info/
+example_data/
 
 # Jupyter Notebook
 .ipynb_checkpoints

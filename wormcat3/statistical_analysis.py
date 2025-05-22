@@ -19,7 +19,22 @@ class EnrichmentAnalyzer:
     def calculate_category_enrichment_scores(self, gene_set_and_categories_df, p_adjust_method=PAdjustMethod.BONFERRONI, p_adjust_threshold=0.01):
         """Run enrichment test for all categories."""
         
-        assert 0 < p_adjust_threshold <= 1, "p_adjust_threshold must be between 0 and 1 (exclusive lower, inclusive upper)."
+        if not isinstance(p_adjust_method, PAdjustMethod):
+            raise Wormcat3Error(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE.to_dict())
+
+        try:
+            p_adjust_threshold = float(p_adjust_threshold)
+        except (TypeError, ValueError):
+            raise Wormcat3Error(
+                f"Invalid p_adjust_threshold: {p_adjust_threshold}. Must be convertible to a float.",
+                ErrorCode.INVALID_VALUE.to_dict()
+            )
+
+        if not (0 < p_adjust_threshold <= 1):
+            raise Wormcat3Error(
+                f"Invalid p_adjust_threshold: {p_adjust_threshold}. Must be > 0 and ≤ 1.",
+                ErrorCode.INVALID_VALUE.to_dict()
+            )
                 
         enrichment_scores_list = []
         
