@@ -40,6 +40,7 @@ class EnrichmentAnalyzer:
         
         for category in self.categories:
             fisher_cat_df = self._run_fisher_test(gene_set_and_categories_df, category)
+            
             fisher_cat_adjusted_df = self._adjust_pvalues(
                 fisher_cat_df, 
                 category, 
@@ -146,25 +147,38 @@ class EnrichmentAnalyzer:
         Returns:
         - A 2x2 contingency table as a list of lists
         """
-        assert all(isinstance(x, int) and x >= 0 for x in [genes_in_both, gene_set_size, category_size, background_size]), \
-            "All input values must be non-negative integers."
-        
-        assert genes_in_both <= category_size, "genes_in_both cannot exceed category_size."
-        assert genes_in_both <= gene_set_size, "genes_in_both cannot exceed gene_set_size."
-        assert category_size <= background_size, "category_size cannot exceed background_size."
-        assert gene_set_size <= background_size, "gene_set_size cannot exceed background_size."
         
         a = genes_in_both  # In both gene set and category
         b = gene_set_size - a  # In gene set but not in category
         c = category_size - a  # In category but not in gene set
         d = background_size - a - b - c  # In neither
-        
-        assert d >= 0, "Calculated 'neither' cell (d) is negative. Check your inputs."
-        
-        # Final sanity check
-        total_check = a + b + c + d
-        assert total_check == background_size, \
-            f"Sanity check failed: table total ({total_check}) != background_size ({background_size})"
+                
+        errors = []
+
+        if not all(isinstance(x, int) and x >= 0 for x in [genes_in_both, gene_set_size, category_size, background_size]):
+            errors.append("All input values must be non-negative integers.")
+
+        if genes_in_both > category_size:
+            errors.append("genes_in_both cannot exceed category_size.")
+
+        if genes_in_both > gene_set_size:
+            errors.append("genes_in_both cannot exceed gene_set_size.")
+
+        if category_size > background_size:
+            errors.append("category_size cannot exceed background_size.")
+
+        if gene_set_size > background_size:
+            errors.append("gene_set_size cannot exceed background_size.")
+
+        if d < 0:
+            errors.append("Calculated 'In neither' is negative. Check your inputs.")
+
+        total_check = a + b + c + d # Final sanity check
+        if total_check != background_size:
+            errors.append(f"Sanity check failed: table total ({total_check}) != background_size ({background_size})")
+
+        if errors:
+            raise Wormcat3Error(" ".join(errors), ErrorCode.INVALID_VALUE.to_dict())
         
         return [[a, b], [c, d]]
 
