@@ -181,4 +181,3 @@ class EnrichmentAnalyzer:
             raise Wormcat3Error(" ".join(errors), ErrorCode.INVALID_VALUE.to_dict())
         
         return [[a, b], [c, d]]
-

@@ -26,7 +26,7 @@ class Wormcat:
                  annotation_file_name = cs.DEFAULT_ANNOTATION_FILE_NAME,
                  email = None):
         """Initialize Wormcat with working directory and annotation file."""
-        
+
         self.email = email
         self.title = title
         ### Create the working directory 
@@ -248,7 +248,7 @@ class Wormcat:
         if csv_files:
             for file in csv_files:
                 wormcat = Wormcat(working_dir_path = self.working_dir_path, 
-                                  annotation_file_name = self.annotation_manager.annotation_name(), 
+                                  annotation_file_name = self.annotation_manager.annotation_file_path, 
                                   title = file.stem)
                 wormcat.analyze_and_visualize_enrichment(str(file), background_input, p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
         else:

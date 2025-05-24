@@ -59,7 +59,6 @@ class WormcatExcel:
             
         Raises:
             FileNotFoundError: If the Excel file doesn't exist
-            ExcelConversionError: If there's an error processing the Excel file
         """
         # Validate inputs
         if not os.path.exists(excel_path):
@@ -173,7 +172,7 @@ class WormcatExcel:
             
         Raises:
             FileNotFoundError: If the category file doesn't exist
-            CategoryProcessingError: If there's an error processing the category file
+
         """
         file_name = row['file']
         if not Path(file_name).exists():
@@ -367,7 +366,7 @@ class WormcatExcel:
                         continue
                     
                     category_sheet = self._process_category_file_row(row, category_sheet)
-                except (FileNotFoundError, CategoryProcessingError) as e:
+                except (FileNotFoundError) as e:
                     print(str(e))
                     continue
 
@@ -424,18 +423,3 @@ class WormcatExcel:
                     
         return process_lst
 
-
-if __name__ == "__main__":
-    # Example usage
-    
-    # Create a WormcatExcel instance with custom settings
-    wormcat_excel = WormcatExcel(
-        significance_threshold=0.01,  # Custom threshold
-    )
-    
-    # Create a summary spreadsheet
-    # wormcat_excel.create_summary_spreadsheet(
-    #     "/path/to/wormcat_output", 
-    #     "/path/to/annotation.csv", 
-    #     "/path/to/output.xlsx"
-    # )
