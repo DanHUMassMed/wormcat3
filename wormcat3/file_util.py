@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import re
 import zipfile
-from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
+from wormcat3.wormcat_error import WormcatError, ErrorCode
 
 def validate_directory_path(directory_path, validation_indicator=False, not_empty_check = True):
     """
@@ -62,7 +62,7 @@ def read_deseq2_file(file_path):
     """Read deseq2 file"""
     
     if not Path(file_path).exists():
-        raise Wormcat3Error(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
+        raise WormcatError(f"Attempting to read a non-existent file: {file_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
     
     # Read the CSV file into a DataFrame
     deseq2_df = pd.read_csv(file_path)
@@ -71,7 +71,7 @@ def read_deseq2_file(file_path):
     required_columns = {'ID', 'log2FoldChange', 'pvalue'}
     missing_columns = required_columns - set(deseq2_df.columns)
     if missing_columns:
-        raise Wormcat3Error(f"{get_name_from_file_path(file_path)} file is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
+        raise WormcatError(f"{get_name_from_file_path(file_path)} file is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
     
     return deseq2_df
 
@@ -81,7 +81,7 @@ def read_gene_set_file(file_path):
     
     path = Path(file_path)
     if not path.is_file():
-        raise Wormcat3Error(
+        raise WormcatError(
             message=f"Attempting to read a non-existent or invalid file: {file_path}",
             code=ErrorCode.FILE_NOT_FOUND.to_dict(),
             origin="read_gene_set_file"
@@ -91,7 +91,7 @@ def read_gene_set_file(file_path):
         df = pd.read_csv(file_path)
         return df.iloc[:, 0].tolist()
     except Exception as e:
-        raise Wormcat3Error(
+        raise WormcatError(
             message=f"Unexpected error while reading file: {file_path}",
             code=ErrorCode.INTERNAL_ERROR.to_dict(),
             origin="read_gene_set_file",
@@ -134,7 +134,7 @@ def extract_run_number(data_file_nm):
         run_number = match.group(1)  # Extract the 5-digit run number
         return run_number
     else:
-        raise Wormcat3Error(f"Invalid file name: {data_file_nm}. It must end with 'run_?????.csv' where '?????' are any 5 digits.", 
+        raise WormcatError(f"Invalid file name: {data_file_nm}. It must end with 'run_?????.csv' where '?????' are any 5 digits.", 
                             ErrorCode.INVALID_NAME.to_dict())
 
 

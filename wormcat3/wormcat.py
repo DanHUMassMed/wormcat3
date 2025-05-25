@@ -12,7 +12,7 @@ from wormcat3.bubble_chart import create_bubble_chart
 from wormcat3.sunburst import create_sunburst
 from wormcat3.wormcat_excel import WormcatExcel
 import wormcat3.constants as cs
-from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
+from wormcat3.wormcat_error import WormcatError, ErrorCode
 
 class Wormcat:
     """
@@ -109,7 +109,7 @@ class Wormcat:
         elif isinstance(gene_set_input, list):
             gene_set_list = gene_set_input
         else:
-            raise Wormcat3Error(
+            raise WormcatError(
                 "Invalid type: gene_set_input must be a file name or a list",
                 ErrorCode.INVALID_TYPE.to_dict()
                 )
@@ -120,7 +120,7 @@ class Wormcat:
             elif isinstance(background_input, list):
                 background_list = background_input
             else:
-                raise Wormcat3Error(
+                raise WormcatError(
                     "Invalid type: background_list must be a file name or a list",
                     ErrorCode.INVALID_TYPE.to_dict()
                     )
@@ -149,7 +149,7 @@ class Wormcat:
             background_list = self.annotation_manager.dedup_list(background_list)
             background_type = self.annotation_manager.get_gene_id_type(background_list)
             if background_type != gene_type:
-                raise Wormcat3Error("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}", 
+                raise WormcatError("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}", 
                                     ErrorCode.CONSTRAINT_VIOLATION.to_dict())
             background_df, background_not_annotated_df = self.annotation_manager.segment_genes_by_annotation_match(background_list, background_type)
 
@@ -221,7 +221,7 @@ class Wormcat:
         
         # Check if path exists
         if not input_path.exists():
-            raise Wormcat3Error(f"Path not found: {input_data}", ErrorCode.FILE_NOT_FOUND.to_dict())
+            raise WormcatError(f"Path not found: {input_data}", ErrorCode.FILE_NOT_FOUND.to_dict())
         
         if input_path.is_file():
                 # Check if it's an Excel file

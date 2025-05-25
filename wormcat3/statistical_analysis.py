@@ -4,7 +4,7 @@ from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 import wormcat3.constants as cs
 from wormcat3.constants import PAdjustMethod
-from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
+from wormcat3.wormcat_error import WormcatError, ErrorCode
     
 class EnrichmentAnalyzer:
     """Performs statistical enrichment analysis."""
@@ -20,18 +20,18 @@ class EnrichmentAnalyzer:
         """Run enrichment test for all categories."""
         
         if not isinstance(p_adjust_method, PAdjustMethod):
-            raise Wormcat3Error(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError(f"Invalid p_adjust_method: {p_adjust_method}. Must be a valid PAdjustMethod.", ErrorCode.INVALID_VALUE.to_dict())
 
         try:
             p_adjust_threshold = float(p_adjust_threshold)
         except (TypeError, ValueError):
-            raise Wormcat3Error(
+            raise WormcatError(
                 f"Invalid p_adjust_threshold: {p_adjust_threshold}. Must be convertible to a float.",
                 ErrorCode.INVALID_VALUE.to_dict()
             )
 
         if not (0 < p_adjust_threshold <= 1):
-            raise Wormcat3Error(
+            raise WormcatError(
                 f"Invalid p_adjust_threshold: {p_adjust_threshold}. Must be > 0 and ≤ 1.",
                 ErrorCode.INVALID_VALUE.to_dict()
             )
@@ -91,6 +91,7 @@ class EnrichmentAnalyzer:
                 _, pvalue = fisher_exact(contingency_table, alternative="greater")
             
             df_row = {"Category": row["Category"], "RGS": rgs_value, "AC": ac_value, "PValue": pvalue}
+
             fisher_cat_df.loc[len(fisher_cat_df)] = df_row
         
         # Sort and save
@@ -104,7 +105,7 @@ class EnrichmentAnalyzer:
         """Adjust p-values using the specified method."""
         
         if method not in {'bonferroni', 'fdr_bh'}:
-            raise Wormcat3Error("Invalid method. Choose either 'bonferroni' or 'fdr_bh'.", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError("Invalid method. Choose either 'bonferroni' or 'fdr_bh'.", ErrorCode.INVALID_VALUE.to_dict())
         
         padj_col = 'Bonferroni' if method == 'bonferroni' else 'FDR'
         
@@ -134,7 +135,7 @@ class EnrichmentAnalyzer:
     
     
     @staticmethod
-    def _create_contingency(genes_in_both, gene_set_size, category_size, background_size):
+    def X_create_contingency(genes_in_both, gene_set_size, category_size, background_size):
         """
         Create a proper 2x2 contingency table for Fisher's exact test.
         
@@ -178,6 +179,6 @@ class EnrichmentAnalyzer:
             errors.append(f"Sanity check failed: table total ({total_check}) != background_size ({background_size})")
 
         if errors:
-            raise Wormcat3Error(" ".join(errors), ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError(" ".join(errors), ErrorCode.INVALID_VALUE.to_dict())
         
         return [[a, b], [c, d]]

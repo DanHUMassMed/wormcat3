@@ -54,8 +54,8 @@ class ErrorCode(Enum):
         return {"value": self.value, "name": self.name}
 
 
-class Wormcat3Error(Exception):
-    """General-purpose error for Wormcat3 operations."""
+class WormcatError(Exception):
+    """General-purpose error for Wormcat operations."""
 
     def __init__(self, message: str, code: dict, origin: str = "", detail: dict = None):
         self.message = message

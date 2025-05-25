@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union, Dict, List
 import wormcat3.constants as cs
 from wormcat3 import file_util
-from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
+from wormcat3.wormcat_error import WormcatError, ErrorCode
 
 class GSEAAnalyzer:
     """
@@ -47,12 +47,12 @@ class GSEAAnalyzer:
         """
         # Validate inputs
         if isinstance(gene_sets, str) and not os.path.exists(gene_sets):
-            raise Wormcat3Error(f"Gene sets file not found: {gene_sets}", ErrorCode.FILE_NOT_FOUND.to_dict())
+            raise WormcatError(f"Gene sets file not found: {gene_sets}", ErrorCode.FILE_NOT_FOUND.to_dict())
         
         if isinstance(ranked_genes, pd.DataFrame):
             required_columns = {'Gene', 'Rank'}
             if not required_columns.issubset(ranked_genes.columns):
-                raise Wormcat3Error(f"ranked_genes DataFrame must contain columns: {required_columns}", ErrorCode.MISSING_FIELD.to_dict())
+                raise WormcatError(f"ranked_genes DataFrame must contain columns: {required_columns}", ErrorCode.MISSING_FIELD.to_dict())
         
         outdir = file_util.validate_directory_path(Path(self.output_dir)/output_dir)
 
@@ -96,14 +96,14 @@ class GSEAAnalyzer:
             return results_df
             
         except Exception as e:
-            raise Wormcat3Error(f"GSEA analysis failed: {str(e)}", ErrorCode.INTERNAL_ERROR.to_dict(), origin="GSEAAnalyzer.run_preranked_gsea")
+            raise WormcatError(f"GSEA analysis failed: {str(e)}", ErrorCode.INTERNAL_ERROR.to_dict(), origin="GSEAAnalyzer.run_preranked_gsea")
     
     def get_enriched_terms(self, fdr_threshold: float = 0.25) -> pd.DataFrame:
         """
         Extract significantly enriched terms based on FDR threshold.
         """
         if self.results is None:
-            raise Wormcat3Error("No GSEA analysis has been run yet. Call run_preranked_gsea first.", ErrorCode.CONSTRAINT_VIOLATION.to_dict())
+            raise WormcatError("No GSEA analysis has been run yet. Call run_preranked_gsea first.", ErrorCode.CONSTRAINT_VIOLATION.to_dict())
         
         results_df = self.run_preranked_gsea(None, None)  # This will reuse stored results
         return results_df[results_df['FDR'] <= fdr_threshold]
@@ -113,10 +113,10 @@ class GSEAAnalyzer:
         Extract leading edge genes for a specific term.
         """
         if self.results is None:
-            raise Wormcat3Error("No GSEA analysis has been run yet. Call run_preranked_gsea first.", ErrorCode.CONSTRAINT_VIOLATION.to_dict())
+            raise WormcatError("No GSEA analysis has been run yet. Call run_preranked_gsea first.", ErrorCode.CONSTRAINT_VIOLATION.to_dict())
         
         if term not in self.results.results:
-            raise Wormcat3Error(f"Term '{term}' not found in GSEA results.", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError(f"Term '{term}' not found in GSEA results.", ErrorCode.INVALID_VALUE.to_dict())
         
         return self.results.results[term]['lead_genes']
 
@@ -140,7 +140,7 @@ class GSEAAnalyzer:
         # Ensure required columns are present
         missing_columns = set(self.required_columns) - set(deseq2_copy.columns)
         if missing_columns:
-            raise Wormcat3Error(f"Input DataFrame is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
+            raise WormcatError(f"Input DataFrame is missing required columns: {missing_columns}", ErrorCode.MISSING_FIELD.to_dict())
         
         # Validate identifier column
         assert not deseq2_copy['ID'].isna().any(), "Column 'ID' contains NaN values, which are not allowed for identifiers"
@@ -262,7 +262,7 @@ class GSEAAnalyzer:
         # Ensure required columns are present
         missing_columns = set(self.required_columns) - set(deseq2_df.columns)
         if missing_columns:
-            raise Wormcat3Error(
+            raise WormcatError(
                 f"Input DataFrame is missing required columns: {missing_columns}",
                 ErrorCode.MISSING_FIELD.to_dict()
             )

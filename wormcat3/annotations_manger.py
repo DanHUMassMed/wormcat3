@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from wormcat3 import file_util
 import wormcat3.constants as cs
-from wormcat3.wormcat3_error import Wormcat3Error, ErrorCode
+from wormcat3.wormcat_error import WormcatError, ErrorCode
     
 
 class AnnotationsManager:
@@ -16,7 +16,7 @@ class AnnotationsManager:
         else:
             self.annotation_file_path = file_util.find_file_path(annotation_file)
             if not self.annotation_file_path:
-                raise Wormcat3Error(f"Annotation file not found: {annotation_file}", ErrorCode.FILE_NOT_FOUND.to_dict())
+                raise WormcatError(f"Annotation file not found: {annotation_file}", ErrorCode.FILE_NOT_FOUND.to_dict())
                         
         self.annotations_df = self._load_annotations()
             
@@ -28,10 +28,10 @@ class AnnotationsManager:
             df = pd.read_csv(self.annotation_file_path)
             df.columns = df.columns.str.replace(' ', '.')
             if df.empty:
-                raise Wormcat3Error(f"Annotation file '{self.annotation_file_path}' is empty.", ErrorCode.FILE_LOAD_FAILED.to_dict())
+                raise WormcatError(f"Annotation file '{self.annotation_file_path}' is empty.", ErrorCode.FILE_LOAD_FAILED.to_dict())
             return df
         except Exception as e:
-            raise Wormcat3Error(f"Failed to load annotation file: {e}", 
+            raise WormcatError(f"Failed to load annotation file: {e}", 
                                 ErrorCode.FILE_LOAD_FAILED.to_dict(), 
                                 origin="AnnotationsManager._load_annotations")
             
@@ -76,7 +76,7 @@ class AnnotationsManager:
         """ Determine the gene ID type from the gene set. """
         
         if len(gene_set) < 2:
-            raise Wormcat3Error("At least two genes are required for comparison.", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError("At least two genes are required for comparison.", ErrorCode.INVALID_VALUE.to_dict())
         
         # Check if the first two genes start with "WBGene"
         if gene_set[0].startswith("WBGene") and gene_set[1].startswith("WBGene"):
@@ -84,7 +84,7 @@ class AnnotationsManager:
         elif not gene_set[0].startswith("WBGene") and not gene_set[1].startswith("WBGene"):
             return "Sequence.ID"
         else:
-            raise Wormcat3Error("Invalid gene data: One gene starts with 'WBGene', but the other does not.", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError("Invalid gene data: One gene starts with 'WBGene', but the other does not.", ErrorCode.INVALID_VALUE.to_dict())
     
     @staticmethod
     def dedup_list(input_list):
@@ -105,7 +105,7 @@ class AnnotationsManager:
         
         # Verify if 'gene_type' is a column in the DataFrame
         if gene_type not in self.annotations_df.columns:
-            raise Wormcat3Error(f"Column '{gene_type}' not found in the DataFrame.", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError(f"Column '{gene_type}' not found in the DataFrame.", ErrorCode.INVALID_VALUE.to_dict())
         
         return pd.merge(gene_set_df, self.annotations_df, on=gene_type, how='left')
 
@@ -117,9 +117,9 @@ class AnnotationsManager:
         
         # Check if gene_type is in both dataframes
         if gene_type not in gene_set_df.columns:
-            raise Wormcat3Error(f"'{gene_type}' MUST be a column in the Gene Set DataFrame.", ErrorCode.MISSING_FIELD.to_dict())
+            raise WormcatError(f"'{gene_type}' MUST be a column in the Gene Set DataFrame.", ErrorCode.MISSING_FIELD.to_dict())
         if gene_type not in self.annotations_df.columns:
-            raise Wormcat3Error(f"Incorrect '{gene_type}' name. Column not found in {self.annotation_name()} file.", ErrorCode.MISSING_FIELD.to_dict())
+            raise WormcatError(f"Incorrect '{gene_type}' name. Column not found in {self.annotation_name()} file.", ErrorCode.MISSING_FIELD.to_dict())
         
         # Perform the left merge
         merged_df = pd.merge(gene_set_df, self.annotations_df, on=gene_type, how='left')
@@ -152,18 +152,18 @@ class AnnotationsManager:
         required_cols = [id_col, id_col_nm]        
         missing_cols = [col for col in required_cols if col not in category_df.columns]
         if missing_cols:
-            raise Wormcat3Error(f"Incorrect column names: {', '.join(missing_cols)} {self.annotation_name()} file does not have these columns.", 
+            raise WormcatError(f"Incorrect column names: {', '.join(missing_cols)} {self.annotation_name()} file does not have these columns.", 
                                 ErrorCode.MISSING_FIELD.to_dict())
         
         if category_df[id_col].isna().any():
-            raise Wormcat3Error(f"{self.annotation_name()} dataframe Column '{id_col}' contains NaN values", 
+            raise WormcatError(f"{self.annotation_name()} dataframe Column '{id_col}' contains NaN values", 
                                 ErrorCode.INVALID_VALUE.to_dict())
         
         # Use ID column as description if desc_col is None
         grouped = category_df.groupby([id_col])[id_col_nm].apply(list).reset_index()
         
         if len(grouped) == 0:
-            raise Wormcat3Error("No gene sets found after grouping", ErrorCode.INVALID_VALUE.to_dict())
+            raise WormcatError("No gene sets found after grouping", ErrorCode.INVALID_VALUE.to_dict())
         
         # Create GMT formatted dictionary
         gmt_format = {}
