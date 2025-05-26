@@ -111,7 +111,7 @@ class AnnotationsManager:
 
 
     def segment_genes_by_annotation_match(self, gene_set_list, gene_type):
-        """ Split background genes into those with and without annotations. """
+        """ Split genes into those with and without annotations. """
         
         gene_set_df = pd.DataFrame(gene_set_list, columns=[gene_type])
         
