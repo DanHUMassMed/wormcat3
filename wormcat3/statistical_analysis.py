@@ -5,6 +5,7 @@ from statsmodels.stats.multitest import multipletests
 import wormcat3.constants as cs
 from wormcat3.constants import PAdjustMethod
 from wormcat3.wormcat_error import WormcatError, ErrorCode
+from typing import Callable
     
 class EnrichmentAnalyzer:
     """Performs statistical enrichment analysis."""
@@ -14,8 +15,12 @@ class EnrichmentAnalyzer:
         self.annotations_df = annotations_df
         self.output_dir = output_dir
         self.run_number = run_number
+        self.contingency_func = self._default_create_contingency
         self.categories = [1, 2, 3]  # Wormcat Categories
     
+    def set_contingency_func(self, contingency_func: Callable):
+        self.contingency_func = contingency_func
+        
     def calculate_category_enrichment_scores(self, gene_set_and_categories_df, p_adjust_method=PAdjustMethod.BONFERRONI, p_adjust_threshold=0.01):
         """Run enrichment test for all categories."""
         
@@ -82,7 +87,7 @@ class EnrichmentAnalyzer:
             if pd.isna(rgs_value) or pd.isna(ac_value):
                 pvalue = None
             else:
-                contingency_table = self._create_contingency(
+                contingency_table = self.contingency_func(
                     rgs_value, 
                     total_gene_set_count, 
                     ac_value, 
@@ -135,7 +140,7 @@ class EnrichmentAnalyzer:
     
     
     @staticmethod
-    def X_create_contingency(genes_in_both, gene_set_size, category_size, background_size):
+    def _default_create_contingency(genes_in_both, gene_set_size, category_size, background_size):
         """
         Create a proper 2x2 contingency table for Fisher's exact test.
         
