@@ -178,7 +178,9 @@ class Wormcat:
             "Annotation File":self.annotation_manager.annotation_name(),
             "Significance Method":p_adjust_method.value,
             "Significance Threshold":p_adjust_threshold,
-            "Domain Scope":"All Genes" if background_list is None else "Custom Background"
+            "Domain Scope":"All Genes" if background_list is None else "Custom Background",
+            "Domain Gene Set Count":f"{len(background_df):,}",
+            "Input Gene Set Count":f"{len(gene_set_and_categories_df):,}"
             }
         self._run_params(run_params)
         
