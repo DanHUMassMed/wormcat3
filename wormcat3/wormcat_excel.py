@@ -70,7 +70,7 @@ class WormcatExcel:
         try:
             input_excel = pd.ExcelFile(excel_path)
         except ValueError:
-            raise WormcatError(f"File [{excel_path}] is not a valid Excel file.", ErrorCode.INVALID_FILE.to_dict())
+            raise WormcatError(f"File [{excel_path}] is not a valid Excel file.", ErrorCode.FILE_LOAD_FAILED.to_dict())
         except Exception as e:
             raise WormcatError(f"Failed to open Excel file: {str(e)}", ErrorCode.INTERNAL_ERROR.to_dict())
 
