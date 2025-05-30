@@ -100,7 +100,7 @@ class EnrichmentAnalyzer:
             fisher_cat_df.loc[len(fisher_cat_df)] = df_row
         
         # Sort and save
-        fisher_cat_df = fisher_cat_df.sort_values(by="PValue")
+        fisher_cat_df = fisher_cat_df.sort_values(by=["PValue", "Category"],key=lambda col: col.str.lower() if col.name == "Category" else col)
         fisher_cat_file_path = Path(self.output_dir) / f"category_{category}_fisher_{self.run_number}.csv"
         fisher_cat_df.to_csv(fisher_cat_file_path, index=False)
         
@@ -123,7 +123,7 @@ class EnrichmentAnalyzer:
             return fisher_cat_adjusted_df
         
         # Sort by p-value
-        fisher_cat_adjusted_df.sort_values(by='PValue', inplace=True)
+        fisher_cat_adjusted_df.sort_values(by=["PValue", "Category"], key=lambda col: col.str.lower() if col.name == "Category" else col, inplace=True)
         
         # Apply correction
         _, corrected_pvals, _, _ = multipletests(fisher_cat_adjusted_df['PValue'], method=method)
