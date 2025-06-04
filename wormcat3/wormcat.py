@@ -87,6 +87,7 @@ class Wormcat:
             "Email":self.email,
             "Title":self.title,
             "Annotation File":self.annotation_manager.annotation_name(),
+            "Gene Type":gene_type
             }
         self._run_params(run_params)
         
@@ -180,7 +181,8 @@ class Wormcat:
             "Significance Threshold":p_adjust_threshold,
             "Domain Scope":"All Genes" if background_list is None else "Custom Background",
             "Domain Gene Set Count":f"{len(background_df):,}",
-            "Input Gene Set Count":f"{len(gene_set_and_categories_df):,}"
+            "Input Gene Set Count":f"{len(gene_set_and_categories_df):,}",
+            "Gene Type":gene_type
             }
         self._run_params(run_params)
         

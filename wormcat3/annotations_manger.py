@@ -75,13 +75,13 @@ class AnnotationsManager:
     def get_gene_id_type(self, gene_set):
         """ Determine the gene ID type from the gene set. """
         
-        if len(gene_set) < 2:
+        if len(gene_set) < 3:
             raise WormcatError("At least two genes are required for comparison.", ErrorCode.INVALID_VALUE.to_dict())
         
         # Check if the first two genes start with "WBGene"
-        if gene_set[0].startswith("WBGene") and gene_set[1].startswith("WBGene"):
+        if gene_set[1].startswith("WBGene") and gene_set[2].startswith("WBGene"):
             return "Wormbase.ID"
-        elif not gene_set[0].startswith("WBGene") and not gene_set[1].startswith("WBGene"):
+        elif not gene_set[1].startswith("WBGene") and not gene_set[2].startswith("WBGene"):
             return "Sequence.ID"
         else:
             raise WormcatError("Invalid gene data: One gene starts with 'WBGene', but the other does not.", ErrorCode.INVALID_VALUE.to_dict())
