@@ -80,9 +80,9 @@ class AnnotationsManager:
         
         # Check if the first two genes start with "WBGene"
         if gene_set[1].startswith("WBGene") and gene_set[2].startswith("WBGene"):
-            return "Wormbase.ID"
+            return cs.GENE_TYPE_WORMBASE_ID
         elif not gene_set[1].startswith("WBGene") and not gene_set[2].startswith("WBGene"):
-            return "Sequence.ID"
+            return cs.GENE_TYPE_SEQUENCE_ID
         else:
             raise WormcatError("Invalid gene data: One gene starts with 'WBGene', but the other does not.", ErrorCode.INVALID_VALUE.to_dict())
     

@@ -23,6 +23,9 @@ DEFAULT_ANNOTATION_FILE_NAME = "whole_genome_v2_nov-11-2021.csv"
 # Gene Set Enrichment Analysis
 DEFAULT_GSEA_RESULTS_DIR = "./gsea_results"
 
+GENE_TYPE_WORMBASE_ID = "Wormbase.ID"
+GENE_TYPE_SEQUENCE_ID = "Sequence.ID"
+
 # Bubble Chart Configuration
 DEFAULT_TITLE = "RGS"
 DEFAULT_WIDTH = 6

@@ -93,13 +93,13 @@ def preprocess_bubble_data(data_file_path, add_calibration=False):
         return bubbles_data
         
     except FileNotFoundError:
-        raise WormcatError(f"CSV file not found: {data_file_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
+        raise WormcatError(f"Error in create Bubble Chart: CSV file not found: {data_file_path}", ErrorCode.FILE_NOT_FOUND.to_dict())
     except pd.errors.EmptyDataError:
-        raise WormcatError(f"The CSV file is empty: {data_file_path}", ErrorCode.FILE_LOAD_FAILED.to_dict())
+        raise WormcatError(f"Error in create Bubble Chart: The CSV file is empty: {data_file_path}", ErrorCode.FILE_LOAD_FAILED.to_dict())
     except pd.errors.ParserError:
-        raise WormcatError(f"Error parsing CSV file: {data_file_path}", ErrorCode.FILE_LOAD_FAILED.to_dict())
+        raise WormcatError(f"Error in create Bubble Chart: Error parsing CSV file: {data_file_path}", ErrorCode.FILE_LOAD_FAILED.to_dict())
     except KeyError as e:
-        raise WormcatError(f"Required column missing in CSV file: {e}", ErrorCode.FILE_LOAD_FAILED.to_dict())
+        raise WormcatError(f"Error in create Bubble Chart: Required column missing in CSV file: {e}", ErrorCode.FILE_LOAD_FAILED.to_dict())
 
 
 def order_categories_by_column(df, category_column='Category', order_by_column='PValue', ascending=True):

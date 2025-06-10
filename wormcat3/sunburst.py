@@ -37,7 +37,7 @@ def _read_input_annotations(file_nm_in):
                 node_list = __getChildrenFor2(components[0].strip(),components[1].strip(),nodes_dict)
                 node_list.append({"name": components[2].strip(), "size": size})
     except Exception as e:
-        print("Error in read_rgs_and_categories:", e)
+        print("Error in _read_input_annotations:", e)
         pass
     return nodes_dict
 

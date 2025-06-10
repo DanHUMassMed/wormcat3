@@ -100,7 +100,8 @@ class Wormcat:
             background_input: Union[str, list] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
-            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD
+            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD,
+            gene_type = None
             
         )-> List[Dict[str, pd.DataFrame]]:
         """Perform enrichment test on the gene set."""
@@ -131,8 +132,16 @@ class Wormcat:
         
         # Preprocess gene set list
         gene_set_list = self.annotation_manager.dedup_list(gene_set_list)
-        gene_type = self.annotation_manager.get_gene_id_type(gene_set_list)
         
+        if gene_type is None:
+            gene_type = self.annotation_manager.get_gene_id_type(gene_set_list)
+            
+        if gene_type is not cs.GENE_TYPE_WORMBASE_ID or cs.GENE_TYPE_SEQUENCE_ID:
+            raise WormcatError(
+                "Invalid Gene Type: gene_type must be {cs.GENE_TYPE_WORMBASE_ID} or {cs.GENE_TYPE_SEQUENCE_ID}.",
+                ErrorCode.INVALID_TYPE.to_dict()
+                )
+            
         # Add annotations
         gene_set_and_categories_df, genes_not_matched_df = self.annotation_manager.segment_genes_by_annotation_match(gene_set_list, gene_type)
         
@@ -148,10 +157,12 @@ class Wormcat:
         # Preprocess background list
         if background_list is not None:  
             background_list = self.annotation_manager.dedup_list(background_list)
+            
             background_type = self.annotation_manager.get_gene_id_type(background_list)
             if background_type != gene_type:
                 raise WormcatError("Gene Set Type and Background Type MUST be the same. {gene_type}!={background_type}", 
                                     ErrorCode.CONSTRAINT_VIOLATION.to_dict())
+                
             background_df, background_not_annotated_df = self.annotation_manager.segment_genes_by_annotation_match(background_list, background_type)
 
             # Save the annotated background input
@@ -198,9 +209,11 @@ class Wormcat:
             background_input: Union[str, list] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
-            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
+            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD,
+            gene_type = None):
         
-        test_results = self.perform_enrichment_analysis(gene_set_input, background_input, p_adjust_method=p_adjust_method, p_adjust_threshold=p_adjust_threshold)
+        test_results = self.perform_enrichment_analysis(gene_set_input, background_input, 
+                                                        p_adjust_method=p_adjust_method, p_adjust_threshold=p_adjust_threshold, gene_type=gene_type)
         for test_result in test_results:
             result_file_path, result_df = next(iter(test_result.items()))
             data_file_nm = os.path.basename(result_file_path)
@@ -219,7 +232,8 @@ class Wormcat:
             background_input: Union[str, list] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
-            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD):
+            p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD,
+            gene_type = None):
         
         input_path = Path(input_data)
         
@@ -254,7 +268,10 @@ class Wormcat:
                 wormcat = Wormcat(working_dir_path = self.working_dir_path, 
                                   annotation_file_name = self.annotation_manager.annotation_file_path, 
                                   title = file.stem)
-                wormcat.analyze_and_visualize_enrichment(str(file), background_input, p_adjust_method = p_adjust_method, p_adjust_threshold = p_adjust_threshold)
+                wormcat.analyze_and_visualize_enrichment(str(file), background_input, 
+                                                         p_adjust_method = p_adjust_method, 
+                                                         p_adjust_threshold = p_adjust_threshold,
+                                                         gene_type = gene_type)
         else:
             print(f"Directory doesn't contain any CSV files: {input_path}")
             return 
