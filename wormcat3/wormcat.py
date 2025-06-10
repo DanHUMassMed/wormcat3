@@ -136,9 +136,9 @@ class Wormcat:
         if gene_type is None:
             gene_type = self.annotation_manager.get_gene_id_type(gene_set_list)
             
-        if gene_type is not cs.GENE_TYPE_WORMBASE_ID or cs.GENE_TYPE_SEQUENCE_ID:
+        if gene_type not in (cs.GENE_TYPE_WORMBASE_ID, cs.GENE_TYPE_SEQUENCE_ID):
             raise WormcatError(
-                "Invalid Gene Type: gene_type must be {cs.GENE_TYPE_WORMBASE_ID} or {cs.GENE_TYPE_SEQUENCE_ID}.",
+                f"Invalid Gene Type: gene_type must be {cs.GENE_TYPE_WORMBASE_ID} or {cs.GENE_TYPE_SEQUENCE_ID}.",
                 ErrorCode.INVALID_TYPE.to_dict()
                 )
             
