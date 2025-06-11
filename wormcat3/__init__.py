@@ -1,5 +1,5 @@
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 from .wormcat import Wormcat
 from .annotations_manger import AnnotationsManager
