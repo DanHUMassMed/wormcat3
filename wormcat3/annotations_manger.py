@@ -114,6 +114,7 @@ class AnnotationsManager:
         """ Split genes into those with and without annotations. """
         
         gene_set_df = pd.DataFrame(gene_set_list, columns=[gene_type])
+        gene_set_df = gene_set_df.fillna('') # It is rare but possible that we get NaN in the input
         
         # Check if gene_type is in both dataframes
         if gene_type not in gene_set_df.columns:

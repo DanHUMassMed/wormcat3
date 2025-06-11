@@ -12,6 +12,7 @@ class PAdjustMethod(Enum):
                 return method
         raise ValueError(f"Invalid PAdjustMethod: {value}")
 
+    
 # Wormcat Configuration
 DEFAULT_WORKING_DIR_PATH = "./wormcat_out"
 DEFAULT_RUN_PREFIX = "run"
