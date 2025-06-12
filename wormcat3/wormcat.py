@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-from typing import Union, List, Dict
+from typing import Optional, Union, List, Dict
 from wormcat3 import file_util
 from wormcat3.annotations_manger import AnnotationsManager
 from wormcat3.statistical_analysis import EnrichmentAnalyzer
@@ -97,7 +97,7 @@ class Wormcat:
     def perform_enrichment_analysis(
             self, 
             gene_set_input: Union[str, list], 
-            background_input: Union[str, list] = None, 
+            background_input: Optional[Union[str, list]] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
             p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD,
@@ -206,7 +206,7 @@ class Wormcat:
 
     def analyze_and_visualize_enrichment(self,
             gene_set_input: Union[str, list], 
-            background_input: Union[str, list] = None, 
+            background_input: Optional[Union[str, list]] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
             p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD,
@@ -228,8 +228,8 @@ class Wormcat:
         print(f"Analysis complete. Output can be found at {self.working_dir_path}")
         
     def wormcat_batch(self,
-            input_data: str, 
-            background_input: Union[str, list] = None, 
+            input_data: Union[str, Path], 
+            background_input: Optional[Union[str, list]] = None, 
             *, 
             p_adjust_method = PAdjustMethod.BONFERRONI, 
             p_adjust_threshold = cs.DEFAULT_P_ADJUST_THRESHOLD,
@@ -246,7 +246,7 @@ class Wormcat:
                 if input_path.suffix.lower() in ['.xlsx', '.xls', '.xlsm']:
                     try:
                         csv_file_path = Path(self.working_dir_path) /f"{input_path.stem}_CSVs"
-                        WormcatExcel.extract_csv_files(input_data, csv_file_path)
+                        WormcatExcel.extract_csv_files(str(input_data), str(csv_file_path))
                     except Exception as e:
                         print(f"Invalid Excel file: {input_path}. Error: {str(e)}")
                         return
@@ -266,7 +266,7 @@ class Wormcat:
         if csv_files:
             for file in csv_files:
                 wormcat = Wormcat(working_dir_path = self.working_dir_path, 
-                                  annotation_file_name = self.annotation_manager.annotation_file_path, 
+                                  annotation_file_name = self.annotation_manager.annotation_file_path,  # type: ignore
                                   title = file.stem)
                 wormcat.analyze_and_visualize_enrichment(str(file), background_input, 
                                                          p_adjust_method = p_adjust_method, 
@@ -280,5 +280,5 @@ class Wormcat:
         annotation_file_path = self.annotation_manager.annotation_file_path
         wormcat_excel = WormcatExcel()
         working_dir_path = Path(self.working_dir_path)
-        wormcat_excel.create_summary_spreadsheet(self.working_dir_path, annotation_file_path, f"{working_dir_path}/{working_dir_path.stem}.xlsx")
+        wormcat_excel.create_summary_spreadsheet(self.working_dir_path, annotation_file_path, f"{working_dir_path}/{working_dir_path.stem}.xlsx") # type: ignore
         print(f"Analysis complete. Output can be found at {self.working_dir_path}")

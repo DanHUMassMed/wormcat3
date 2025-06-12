@@ -1,3 +1,5 @@
+# cSpell:ignore ggplot ggtitle ylim darkred orangered dimgray
+
 import matplotlib
 matplotlib.use('Agg') 
 

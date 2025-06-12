@@ -25,7 +25,7 @@ class AnnotationsManager:
     def _load_annotations(self):
         """ Load annotations from file. """
         try:
-            df = pd.read_csv(self.annotation_file_path)
+            df = pd.read_csv(self.annotation_file_path) # type: ignore
             df.columns = df.columns.str.replace(' ', '.')
             if df.empty:
                 raise WormcatError(f"Annotation file '{self.annotation_file_path}' is empty.", ErrorCode.FILE_LOAD_FAILED.to_dict())

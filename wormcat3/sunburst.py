@@ -78,7 +78,7 @@ def __getChildrenFor2(grand_parent, parent, nodes_dict):
     return node_list
 
 
-def create_sunburst(dir_path: str, run_number: str) -> None:
+def create_sunburst(dir_path: str | Path, run_number: str) -> None:
     """
     Create a sunburst HTML file from the data in 'input_annotated_###.csv' file.
     """
@@ -94,11 +94,4 @@ def create_sunburst(dir_path: str, run_number: str) -> None:
     var_json_data = f"var json_data = {json_data}"
     rendered_html = sunburst_template_front + var_json_data + sunburst_template_back
     html_file.write_text(rendered_html, encoding="utf-8")
-
-
-
-if __name__ == "__main__":
-    print(f"starting {os.getcwd()}")
-    create_sunburst('RGS_Feb-14-2020-11_45_54')
-
 
