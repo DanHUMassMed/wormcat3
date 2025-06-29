@@ -71,21 +71,30 @@ class AnnotationsManager:
         else:
             return "[NO_ANNOTATION_NAME]"
 
-    
     def get_gene_id_type(self, gene_set):
-        """ Determine the gene ID type from the gene set. """
-        
-        if len(gene_set) < 3:
-            raise WormcatError("At least two genes are required for comparison.", ErrorCode.INVALID_VALUE.to_dict())
-        
-        # Check if the first two genes start with "WBGene"
-        if gene_set[1].startswith("WBGene") and gene_set[2].startswith("WBGene"):
+        # Skip the first row (possible header), then filter valid gene entries
+        valid_genes = [
+            g for g in gene_set[1:]  # Skip the first row
+            if isinstance(g, str) and len(g.strip()) > 1
+        ]
+
+        if len(valid_genes) < 2:
+            raise WormcatError(
+                "Not enough valid gene entries to determine gene type.",
+                ErrorCode.INVALID_VALUE.to_dict()
+            )
+
+        # Check if both start with 'WBGene' or not
+        if valid_genes[0].startswith("WBGene") and valid_genes[1].startswith("WBGene"):
             return cs.GENE_TYPE_WORMBASE_ID
-        elif not gene_set[1].startswith("WBGene") and not gene_set[2].startswith("WBGene"):
+        elif not valid_genes[0].startswith("WBGene") and not valid_genes[1].startswith("WBGene"):
             return cs.GENE_TYPE_SEQUENCE_ID
         else:
-            raise WormcatError("Invalid gene data: One gene starts with 'WBGene', but the other does not.", ErrorCode.INVALID_VALUE.to_dict())
-    
+            raise WormcatError(
+                "Invalid gene data: One gene starts with 'WBGene', but the other does not.",
+                ErrorCode.INVALID_VALUE.to_dict()
+            )
+           
     @staticmethod
     def dedup_list(input_list):
         """ Deduplicate a list while preserving order. """
