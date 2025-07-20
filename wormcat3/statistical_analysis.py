@@ -6,6 +6,7 @@ import wormcat3.constants as cs
 from wormcat3.constants import PAdjustMethod
 from wormcat3.wormcat_error import WormcatError, ErrorCode
 from typing import Callable
+import numbers
     
 class EnrichmentAnalyzer:
     """Performs statistical enrichment analysis."""
@@ -160,8 +161,11 @@ class EnrichmentAnalyzer:
         d = background_size - a - b - c  # In neither
                 
         errors = []
+        
+        # print(f"{genes_in_both=}, {gene_set_size=}, {category_size=}, {background_size=}")
+        # print(f"Contingency Table: {a=}, {b=}, {c=}, {d=}") 
 
-        if not all(isinstance(x, int) and x >= 0 for x in [genes_in_both, gene_set_size, category_size, background_size]):
+        if not all(isinstance(x, numbers.Real) and x >= 0 for x in [genes_in_both, gene_set_size, category_size, background_size]):
             errors.append("All input values must be non-negative integers.")
 
         if genes_in_both > category_size:
