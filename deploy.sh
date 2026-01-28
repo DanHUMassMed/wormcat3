@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION_FILE="wormcat3/__init__.py" 
+VERSION_FILE="wormcat3/__init__.py"
 
 # Get current version
 VERSION=$(grep "__version__" $VERSION_FILE | cut -d'"' -f2)
@@ -12,21 +12,18 @@ PATCH=${PARTS[2]}
 
 # Increment patch
 NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-
 echo "Bumping version: $VERSION → $NEW_VERSION"
 
 # Update __init__.py
 sed -i '' "s/__version__ = .*/__version__ = \"$NEW_VERSION\"/" $VERSION_FILE
-sed -i '' "s/__version__ = .*/__version__ = \"$NEW_VERSION\"/" setup.py
+sed -i '' "s/version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
 
 # Build distribution
+rm -rf dist
+rm -rf wormcat3.egg-info
+python -m build --sdist --wheel
 
-
-rm -rf ./dist
-rm -rf ./wormcat3.egg-info
-python setup.py sdist
-
-# Run twine check and capture the output
+# Twine check
 CHECK_OUTPUT=$(twine check dist/*)
 echo "$CHECK_OUTPUT"
 
@@ -40,7 +37,6 @@ if echo "$CHECK_OUTPUT" | grep -q "PASSED"; then
     git tag "v$NEW_VERSION"
     git push
     git push --tags
-
 else
     echo "Twine check failed..."
     exit 1

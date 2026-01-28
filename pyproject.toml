@@ -1,3 +1,34 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "wormcat3"
+version = "0.1.10"
+description = "WormCat is a tool for annotating and visualizing gene set enrichment data from C. elegans microarray, RNA seq or RNAi screen data."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Dan Higgins", email = "daniel.higgins@gatech.edu"}
+]
+urls = { "Homepage" = "https://github.com/DanHUMassMed/wormcat3.git" }
+keywords = ["wormcat", "gene enrichment", "C. elegans"]
+
+dependencies = [
+    "ipykernel",
+    "scipy==1.16.3",
+    "pandas==2.2.3",
+    "gseapy==1.1.8",
+    "plotnine==0.14.5",
+    "statsmodels==0.14.4",
+    "XlsxWriter==3.2.2",
+    "openpyxl==3.1.5"
+]
+
+[tool.setuptools]
+packages = ["wormcat3"] 
+include-package-data = true
+zip-safe = false
+
+
