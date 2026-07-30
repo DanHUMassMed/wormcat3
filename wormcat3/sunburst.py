@@ -1,11 +1,13 @@
 """
 Create sunburst HTML file with Regulated Gene Set Data (RGS)
 """
+
 import json
-import os
-import pandas as pd
 from pathlib import Path
-from wormcat3.sunburst_template import sunburst_template_front, sunburst_template_back
+
+import pandas as pd
+
+from wormcat3.sunburst_template import sunburst_template_back, sunburst_template_front
 
 
 def _read_input_annotations(file_nm_in):
@@ -15,47 +17,48 @@ def _read_input_annotations(file_nm_in):
     nodes_dict = {}
     try:
         df = pd.read_csv(file_nm_in)
-        node1_list= []
-        nodes_dict = {"name":"rgs", "children":node1_list}
+        node1_list = []
+        nodes_dict = {"name": "rgs", "children": node1_list}
 
         cat3 = df.groupby(["Category.3"]).count()
 
-        cat3_dict={}
+        cat3_dict = {}
         for cat3_index, row in cat3.iterrows():
-            count = int(row['Wormbase.ID'])
+            count = int(row["Wormbase.ID"])
             cat3_dict[cat3_index] = count
 
         for key in cat3_dict:
-            components = key.split(':')
+            components = key.split(":")
             size = int(cat3_dict[key])
             if len(components) == 1:
                 node1_list.append({"name": components[0].strip(), "size": size})
             elif len(components) == 2:
-                node_list = __getChildrenFor(components[0].strip(),nodes_dict)
+                node_list = __getChildrenFor(components[0].strip(), nodes_dict)
                 node_list.append({"name": components[1].strip(), "size": size})
             else:
-                node_list = __getChildrenFor2(components[0].strip(),components[1].strip(),nodes_dict)
+                node_list = __getChildrenFor2(components[0].strip(), components[1].strip(), nodes_dict)
                 node_list.append({"name": components[2].strip(), "size": size})
     except Exception as e:
         print("Error/Warning unable to create_sunburst", e)
         pass
     return nodes_dict
 
+
 def __getChildrenFor(parent, nodes_dict):
     """
     Utility function getChildrenFor given parent
     """
-    children = nodes_dict['children']
+    children = nodes_dict["children"]
     node_list = None
     for key in children:
-        if parent == key['name']:
-            if 'children' in key:
-                node_list = key['children']
+        if parent == key["name"]:
+            if "children" in key:
+                node_list = key["children"]
             break
 
     if node_list is None:
         node_list = []
-        children.append({"name":parent, "children":node_list})
+        children.append({"name": parent, "children": node_list})
     return node_list
 
 
@@ -66,14 +69,14 @@ def __getChildrenFor2(grand_parent, parent, nodes_dict):
     children = __getChildrenFor(grand_parent, nodes_dict)
     node_list = None
     for key in children:
-        if parent == key['name']:
-            if 'children' in key:
-                node_list = key['children']
+        if parent == key["name"]:
+            if "children" in key:
+                node_list = key["children"]
             break
 
     if node_list is None:
         node_list = []
-        children.append({"name":parent, "children":node_list})
+        children.append({"name": parent, "children": node_list})
 
     return node_list
 
@@ -94,4 +97,3 @@ def create_sunburst(dir_path: str | Path, run_number: str) -> None:
     var_json_data = f"var json_data = {json_data}"
     rendered_html = sunburst_template_front + var_json_data + sunburst_template_back
     html_file.write_text(rendered_html, encoding="utf-8")
-

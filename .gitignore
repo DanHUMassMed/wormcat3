@@ -17,6 +17,8 @@ dist/
 wormcat3.egg-info/
 example_data/
 
+build/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wormcat3"
-version = "0.1.10"
+version = "0.1.11"
 description = "WormCat is a tool for annotating and visualizing gene set enrichment data from C. elegans microarray, RNA seq or RNAi screen data."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 license = {text = "MIT"}
 authors = [
     {name = "Dan Higgins", email = "daniel.higgins@gatech.edu"}
@@ -17,6 +17,8 @@ keywords = ["wormcat", "gene enrichment", "C. elegans"]
 
 dependencies = [
     "ipykernel",
+    "pip",
+    "build",
     "scipy==1.16.3",
     "pandas==2.2.3",
     "gseapy==1.1.8",
@@ -26,9 +28,39 @@ dependencies = [
     "openpyxl==3.1.5"
 ]
 
-[tool.setuptools]
-packages = ["wormcat3"] 
-include-package-data = true
-zip-safe = false
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wormcat3*"]
 
+[tool.setuptools.package-data]
+wormcat3 = ["extdata/*.csv"]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+    "twine>=5.0.0",
+    "build>=1.2.0"
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+exclude = [
+    "wormcat3/sunburst_template.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "E722"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]

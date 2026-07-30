@@ -1,10 +1,11 @@
 from enum import Enum
 
+
 # Enum for p-value adjustment methods
 class PAdjustMethod(Enum):
-    BONFERRONI = 'bonferroni'
-    FDR = 'fdr_bh'
-    
+    BONFERRONI = "bonferroni"
+    FDR = "fdr_bh"
+
     @classmethod
     def from_str(cls, value: str) -> "PAdjustMethod":
         for method in cls:
@@ -12,7 +13,7 @@ class PAdjustMethod(Enum):
                 return method
         raise ValueError(f"Invalid PAdjustMethod: {value}")
 
-    
+
 # Wormcat Configuration
 DEFAULT_WORKING_DIR_PATH = "./wormcat_out"
 DEFAULT_RUN_PREFIX = "run"
