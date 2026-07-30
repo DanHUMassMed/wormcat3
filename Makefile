@@ -1,4 +1,4 @@
-.PHONY: help install dev lint format test build deploy clean
+.PHONY: help install dev lint format test bump-version build deploy clean
 
 # Default shell
 SHELL := /bin/bash
@@ -42,23 +42,34 @@ test: ## Execute test suite via pytest
 	@echo "==> Running test suite..."
 	uv run pytest
 
+bump-version: ## Bump patch version (or specify explicit VERSION=X.Y.Z)
+	@if [ -n "$(VERSION)" ]; then \
+		NEW_VERSION="$(VERSION)"; \
+		echo "==> Bumping version to explicit: $$NEW_VERSION"; \
+	else \
+		CURRENT_VERSION=$$(grep "__version__ =" $(INIT_FILE) | cut -d'"' -f2); \
+		IFS='.' read -r -a PARTS <<< "$$CURRENT_VERSION"; \
+		MAJOR=$${PARTS[0]}; \
+		MINOR=$${PARTS[1]}; \
+		PATCH=$${PARTS[2]}; \
+		NEW_VERSION="$$MAJOR.$$MINOR.$$((PATCH + 1))"; \
+		echo "==> Auto-bumping patch version: $$CURRENT_VERSION → $$NEW_VERSION"; \
+	fi; \
+	sed -i '' "s/__version__ = .*/__version__ = \"$$NEW_VERSION\"/" $(INIT_FILE); \
+	sed -i '' "s/^version = .*/version = \"$$NEW_VERSION\"/" $(PYPROJECT_FILE)
+
 build: clean ## Build distribution packages (wheel and sdist)
 	@echo "==> Building distribution packages..."
 	uv run python -m build
 
-deploy: build ## Check package with twine and deploy to PyPI (optional: VERSION=X.Y.Z)
+deploy: bump-version build ## Bump version, build dist, validate, upload to PyPI & push git tags
 	@echo "==> Validating distribution artifacts with twine..."
 	uv run twine check dist/*
-	@if [ -n "$(VERSION)" ]; then \
-		echo "==> Updating version to $(VERSION)..."; \
-		sed -i '' "s/__version__ = .*/__version__ = \"$(VERSION)\"/" $(INIT_FILE); \
-		sed -i '' "s/version = .*/version = \"$(VERSION)\"/" $(PYPROJECT_FILE); \
-	fi
-	@CURRENT_VERSION=$$(grep "__version__" $(INIT_FILE) | cut -d'"' -f2); \
+	@CURRENT_VERSION=$$(grep "__version__ =" $(INIT_FILE) | cut -d'"' -f2); \
 	echo "==> Uploading $(PACKAGE_NAME) v$$CURRENT_VERSION to PyPI..."; \
 	uv run twine upload --repository pypi dist/*; \
 	git add $(INIT_FILE) $(PYPROJECT_FILE); \
-	git commit -m "Bump version to $$CURRENT_VERSION"; \
+	git commit -m "Bump version to v$$CURRENT_VERSION"; \
 	git tag "v$$CURRENT_VERSION"; \
 	git push && git push --tags
 
