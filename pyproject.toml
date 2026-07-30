@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wormcat3"
-version = "0.1.11"
+version = "0.1.12"
 description = "WormCat is a tool for annotating and visualizing gene set enrichment data from C. elegans microarray, RNA seq or RNAi screen data."
 readme = "README.md"
 requires-python = ">=3.13"
