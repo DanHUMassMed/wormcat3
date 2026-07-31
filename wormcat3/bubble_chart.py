@@ -26,7 +26,10 @@ from plotnine import (
 )
 
 import wormcat3.constants as cs
+from wormcat3.logger import get_logger
 from wormcat3.wormcat_error import ErrorCode, WormcatError
+
+logger = get_logger(__name__)
 
 # Suppress UserWarnings and DeprecationWarnings from plotnine
 warnings.filterwarnings("ignore", category=UserWarning, module="plotnine")
@@ -272,6 +275,7 @@ def generate_bubble_plot(
     try:
         p.save(filename=svg_file_path, format="svg", width=width, height=height)
     except Exception as e:
+        logger.error(f"Failed to save plot: {e}")
         raise WormcatError(f"Failed to save plot: {e}", ErrorCode.INTERNAL_ERROR.to_dict())
 
 
@@ -293,4 +297,4 @@ def create_bubble_chart(dir_path: str, data_file_nm: str, plot_title="RGS", add_
 
         generate_bubble_plot(bubbles_data, svg_file_path, plot_title=plot_title, height=height, width=9)
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Error creating bubble chart: {e}")

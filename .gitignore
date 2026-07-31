@@ -5,6 +5,7 @@ __pycache__/
 
 *.gmt
 *.xlsx
+wormcat.log
 
 # But include this specific file
 !Murphy_TS.xlsx

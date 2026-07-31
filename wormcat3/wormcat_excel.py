@@ -10,7 +10,10 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 from wormcat3 import file_util
+from wormcat3.logger import get_logger
 from wormcat3.wormcat_error import ErrorCode, WormcatError
+
+logger = get_logger(__name__)
 
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -115,7 +118,7 @@ class WormcatExcel:
         process_lst = self._collect_category_files(wormcat_path)
 
         if not process_lst:
-            print("No valid category files found to process")
+            logger.warning("No valid category files found to process")
             return
 
         df_process = pd.DataFrame(process_lst, columns=["sheet", "category", "file", "label"])
@@ -326,7 +329,7 @@ class WormcatExcel:
                     self._process_sheet(files_to_process, data, writer, sheet_label)
 
         except Exception as e:
-            print(f"Error processing category files: {str(e)}")
+            logger.error(f"Error processing category files: {str(e)}")
             raise
 
     def _get_excel_col_name(self, n: int) -> str:
@@ -356,7 +359,7 @@ class WormcatExcel:
         cat_files = files_to_process[files_to_process["sheet"] == sheet_label]
         cat_files = cat_files.copy()
         if cat_files.empty:
-            print(f"No files to process for sheet {sheet_label}")
+            logger.warning(f"No files to process for sheet {sheet_label}")
             return
 
         label_category = f"Category {cat_files['category'].iloc[0]}"
@@ -372,12 +375,12 @@ class WormcatExcel:
                 try:
                     file_path = Path(row["file"])
                     if not file_path.exists():
-                        print(f"WARNING: File not found: {row['file']}")
+                        logger.warning(f"File not found: {row['file']}")
                         continue
 
                     category_sheet = self._process_category_file_row(row, category_sheet)
                 except FileNotFoundError as e:
-                    print(str(e))
+                    logger.error(str(e))
                     continue
 
             # Write the sheet to Excel
@@ -394,7 +397,7 @@ class WormcatExcel:
             worksheet.autofit()
 
         except Exception as e:
-            print(f"Error processing sheet {sheet_label}: {str(e)}")
+            logger.error(f"Error processing sheet {sheet_label}: {str(e)}")
             raise
 
     def _collect_category_files(self, wormcat_path: Path) -> List[Dict[str, Any]]:

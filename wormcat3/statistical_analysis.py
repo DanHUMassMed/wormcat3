@@ -7,7 +7,10 @@ from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 
 from wormcat3.constants import PAdjustMethod
+from wormcat3.logger import get_logger
 from wormcat3.wormcat_error import ErrorCode, WormcatError
+
+logger = get_logger(__name__)
 
 
 class EnrichmentAnalyzer:
@@ -180,8 +183,10 @@ class EnrichmentAnalyzer:
 
         errors = []
 
-        # print(f"{genes_in_both=}, {gene_set_size=}, {category_size=}, {background_size=}")
-        # print(f"Contingency Table: {a=}, {b=}, {c=}, {d=}")
+        logger.debug(
+            f"genes_in_both={genes_in_both}, gene_set_size={gene_set_size}, category_size={category_size}, background_size={background_size}"
+        )
+        logger.debug(f"Contingency Table: a={a}, b={b}, c={c}, d={d}")
 
         if not all(
             isinstance(x, numbers.Real) and x >= 0

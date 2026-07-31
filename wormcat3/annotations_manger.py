@@ -5,7 +5,10 @@ import pandas as pd
 
 import wormcat3.constants as cs
 from wormcat3 import file_util
+from wormcat3.logger import get_logger
 from wormcat3.wormcat_error import ErrorCode, WormcatError
+
+logger = get_logger(__name__)
 
 
 class AnnotationsManager:
@@ -221,10 +224,10 @@ class AnnotationsManager:
                 file.write(line + "\n")
 
         if not os.path.exists(output_file_path):
-            print(f"[Warning] Output file {output_file_path} was not created.")
+            logger.warning(f"Output file {output_file_path} was not created.")
         elif os.path.getsize(output_file_path) == 0:
-            print(f"[Warning] Output file {output_file_path} is empty.")
+            logger.warning(f"Output file {output_file_path} is empty.")
         else:
-            print(f"Successfully created GMT file: {output_file_path}")
+            logger.info(f"Successfully created GMT file: {output_file_path}")
 
         return output_file_path

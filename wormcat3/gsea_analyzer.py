@@ -8,7 +8,10 @@ import pandas as pd
 
 import wormcat3.constants as cs
 from wormcat3 import file_util
+from wormcat3.logger import get_logger
 from wormcat3.wormcat_error import ErrorCode, WormcatError
+
+logger = get_logger(__name__)
 
 
 class GSEAAnalyzer:
@@ -207,9 +210,9 @@ class GSEAAnalyzer:
 
         # Print any duplicates found
         if not duplicate_genes.empty:
-            print(f"Found {len(duplicate_genes['Gene'].unique())} genes with duplicates:")
+            logger.info(f"Found {len(duplicate_genes['Gene'].unique())} genes with duplicates:")
             duplicate_percent = (len(duplicate_genes) / len(ranked_list)) * 100
-            print(f"Duplicated genes represent {duplicate_percent:.2f}% of the dataset")
+            logger.warning(f"Duplicated genes represent {duplicate_percent:.2f}% of the dataset")
 
         # Remove duplicates, keeping the entry with the highest rank for each gene
         # Since the list is already sorted by Rank (descending), we keep the first occurrence
@@ -263,9 +266,9 @@ class GSEAAnalyzer:
 
             # Verify no duplicates remain
             assert ranked_list["Rank"].duplicated().sum() == 0, "Failed to remove all duplicate rank values"
-            print("Successfully made all Rank values unique while preserving order")
+            logger.debug("Successfully made all Rank values unique while preserving order")
         else:
-            print("No duplicate Rank values found")
+            logger.debug("No duplicate Rank values found")
 
         return ranked_list
 

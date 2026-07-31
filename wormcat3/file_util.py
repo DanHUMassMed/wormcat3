@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from wormcat3.logger import get_logger
 from wormcat3.wormcat_error import ErrorCode, WormcatError
+
+logger = get_logger(__name__)
 
 
 def validate_directory_path(directory_path, validation_indicator=False, not_empty_check=True):
@@ -25,7 +28,7 @@ def validate_directory_path(directory_path, validation_indicator=False, not_empt
         try:
             path.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            print(f"[Error] Failed to create directory '{path}': {e}")
+            logger.error(f"Failed to create directory '{path}': {e}")
             return (False, str(path)) if validation_indicator else str(path)
 
     return (True, str(path)) if validation_indicator else str(path)

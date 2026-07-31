@@ -11,10 +11,13 @@ from wormcat3.annotations_manger import AnnotationsManager
 from wormcat3.bubble_chart import create_bubble_chart
 from wormcat3.constants import PAdjustMethod
 from wormcat3.gsea_analyzer import GSEAAnalyzer
+from wormcat3.logger import get_logger
 from wormcat3.statistical_analysis import EnrichmentAnalyzer
 from wormcat3.sunburst import create_sunburst
 from wormcat3.wormcat_error import ErrorCode, WormcatError
 from wormcat3.wormcat_excel import WormcatExcel
+
+logger = get_logger(__name__)
 
 
 class Wormcat:
@@ -97,7 +100,7 @@ class Wormcat:
         }
         self._run_params(run_params)
 
-        print(f"Analysis complete. Output can be found at {self.working_dir_path}")
+        logger.info(f"Analysis complete. Output can be found at {self.working_dir_path}")
 
     def perform_enrichment_analysis(
         self,
@@ -237,7 +240,7 @@ class Wormcat:
 
         run_number = os.path.basename(base_dir_path)
         create_sunburst(base_dir_path, run_number)
-        print(f"Analysis complete. Output can be found at {self.working_dir_path}")
+        logger.info(f"Analysis complete. Output can be found at {self.working_dir_path}")
 
     def wormcat_batch(
         self,
@@ -262,17 +265,17 @@ class Wormcat:
                     csv_file_path = Path(self.working_dir_path) / f"{input_path.stem}_CSVs"
                     WormcatExcel.extract_csv_files(str(input_data), str(csv_file_path))
                 except Exception as e:
-                    print(f"Invalid Excel file: {input_path}. Error: {str(e)}")
+                    logger.error(f"Invalid Excel file: {input_path}. Error: {str(e)}")
                     return
             else:
-                print(f"File is not an Excel file: {input_path}")
+                logger.error(f"File is not an Excel file: {input_path}")
                 return
 
         # Check if it's a directory
         elif input_path.is_dir():
             csv_file_path = input_path
         else:
-            print(f"input_data is neither a valid Excel file nor a directory with CSV files: {input_data}")
+            logger.error(f"input_data is neither a valid Excel file nor a directory with CSV files: {input_data}")
             return
 
         # Look for CSV files
@@ -292,7 +295,7 @@ class Wormcat:
                     gene_type=gene_type,
                 )
         else:
-            print(f"Directory doesn't contain any CSV files: {input_path}")
+            logger.error(f"Directory doesn't contain any CSV files: {input_path}")
             return
 
         annotation_file_path = self.annotation_manager.annotation_file_path
@@ -303,4 +306,4 @@ class Wormcat:
             annotation_file_path,
             f"{working_dir_path}/{working_dir_path.stem}.xlsx",
         )  # type: ignore
-        print(f"Analysis complete. Output can be found at {self.working_dir_path}")
+        logger.info(f"Analysis complete. Output can be found at {self.working_dir_path}")
