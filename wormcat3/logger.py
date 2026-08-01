@@ -44,11 +44,11 @@ def configure_logging(
 ) -> logging.Logger:
     """
     Configure top-level logger handlers and level.
-    Respects WORMCAT_LOG_LEVEL environment variable if set.
+    Respects WORMCAT_LOG_LEVEL and WORMCAT_LOG_PATH environment variables if set.
 
     Args:
         level: Minimum log level (e.g. "DEBUG", "INFO", "WARNING", "ERROR").
-        log_file: Optional file path to record log messages.
+        log_file: Optional file path to record log messages. If None, respects WORMCAT_LOG_PATH.
         disabled: If True, silences all logger output.
         format_str: Custom format string for console log messages.
 
@@ -58,13 +58,19 @@ def configure_logging(
     root_logger = logging.getLogger(LOGGER_NAME)
     root_logger.handlers.clear()
 
-    # Check environment variable override
+    # Check environment variable override for log level
     env_level = os.getenv("WORMCAT_LOG_LEVEL")
     if env_level:
         if env_level.upper() in ["OFF", "DISABLE", "FALSE", "NONE", "0"]:
             disabled = True
         else:
             level = env_level.upper()
+
+    # Check environment variable override for log path if log_file is not explicitly set
+    if log_file is None:
+        env_log_path = os.getenv("WORMCAT_LOG_PATH")
+        if env_log_path:
+            log_file = env_log_path
 
     if disabled:
         root_logger.addHandler(logging.NullHandler())

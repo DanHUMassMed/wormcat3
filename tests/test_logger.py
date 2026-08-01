@@ -21,6 +21,8 @@ def reset_logging_state():
     disable_logging()
     if "WORMCAT_LOG_LEVEL" in os.environ:
         del os.environ["WORMCAT_LOG_LEVEL"]
+    if "WORMCAT_LOG_PATH" in os.environ:
+        del os.environ["WORMCAT_LOG_PATH"]
 
 
 def test_get_logger_naming():
@@ -110,6 +112,34 @@ def test_file_handler_logging(tmp_path: Path):
     content = log_file.read_text(encoding="utf-8")
     assert "[INFO] wormcat3.test_file" in content
     assert "Message saved to file" in content
+
+
+def test_env_var_log_path(tmp_path: Path):
+    env_log_file = tmp_path / "env_run.log"
+    os.environ["WORMCAT_LOG_PATH"] = str(env_log_file)
+    configure_logging(level="INFO")
+
+    logger = get_logger("test_env_file")
+    logger.info("Message saved via env var path")
+
+    assert env_log_file.exists()
+    content = env_log_file.read_text(encoding="utf-8")
+    assert "Message saved via env var path" in content
+
+
+def test_env_var_log_path_override(tmp_path: Path):
+    env_log_file = tmp_path / "env_run.log"
+    explicit_log_file = tmp_path / "explicit_run.log"
+    os.environ["WORMCAT_LOG_PATH"] = str(env_log_file)
+    configure_logging(level="INFO", log_file=explicit_log_file)
+
+    logger = get_logger("test_override_file")
+    logger.info("Message saved to explicit file")
+
+    assert explicit_log_file.exists()
+    assert not env_log_file.exists()
+    content = explicit_log_file.read_text(encoding="utf-8")
+    assert "Message saved to explicit file" in content
 
 
 def test_exports_in_init():
