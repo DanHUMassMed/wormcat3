@@ -183,11 +183,6 @@ class EnrichmentAnalyzer:
 
         errors = []
 
-        logger.debug(
-            f"genes_in_both={genes_in_both}, gene_set_size={gene_set_size}, category_size={category_size}, background_size={background_size}"
-        )
-        logger.debug(f"Contingency Table: a={a}, b={b}, c={c}, d={d}")
-
         if not all(
             isinstance(x, numbers.Real) and x >= 0
             for x in [genes_in_both, gene_set_size, category_size, background_size]

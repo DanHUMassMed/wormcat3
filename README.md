@@ -73,18 +73,18 @@ Wormcat is also available as an online tool at [www.wormcat.com](http://www.worm
 ### Using `uv` (Recommended)
 
 ```bash
-uv add wormcat3
-# Or in a virtual environment:
+uv venv --python 3.13
+
 uv pip install wormcat3
 ```
 
-### Using `pip`
+### Using with jupyter lab
 
 ```bash
-pip install wormcat3
+uv pip install jupyterlab
+uv run jupyter lab
 ```
-
-**Requirements**: Python `>= 3.13`.
+**Getting Started Notebook**: [start_here.ipynb](https://github.com/DanHUMassMed/wormcat3/blob/main/notebooks/start_here.ipynb).
 
 ---
 
