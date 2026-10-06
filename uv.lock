@@ -1603,12 +1603,13 @@ wheels = [
 
 [[package]]
 name = "wormcat3"
-version = "0.1.13"
+version = "0.1.14"
 source = { editable = "." }
 dependencies = [
     { name = "build" },
     { name = "gseapy" },
     { name = "ipykernel" },
+    { name = "matplotlib" },
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pip" },
@@ -1632,6 +1633,7 @@ requires-dist = [
     { name = "build" },
     { name = "gseapy", specifier = "==1.1.8" },
     { name = "ipykernel" },
+    { name = "matplotlib", specifier = "==3.10.8" },
     { name = "openpyxl", specifier = "==3.1.5" },
     { name = "pandas", specifier = "==2.2.3" },
     { name = "pip" },
