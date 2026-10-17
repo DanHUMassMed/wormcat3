@@ -16,7 +16,8 @@
 - [Original Publication & Abstract](#original-publication--abstract)
 - [Online Web Tool & Workflow Diagrams](#online-web-tool--workflow-diagrams)
 - [Installation](#installation)
-- [Quick Start & Usage Examples](#quick-start--usage-examples)
+- [Command-Line Interface (CLI)](#command-line-interface-cli)
+- [Quick Start & Usage Examples (Python API)](#quick-start--usage-examples-python-api)
   - [1. Gene Set Enrichment Analysis & Visualization](#1-gene-set-enrichment-analysis--visualization)
   - [2. Pre-ranked GSEA Analysis](#2-pre-ranked-gsea-analysis)
   - [3. Batch Execution (Excel / Directory of CSVs)](#3-batch-execution-excel--directory-of-csvs)
@@ -88,7 +89,64 @@ uv run jupyter lab
 
 ---
 
-## Quick Start & Usage Examples
+## Command-Line Interface (CLI)
+
+`wormcat3` installs a standalone command-line tool `wormcat` for terminal and pipeline workflows.
+
+```bash
+# Check installed version
+wormcat --version
+
+# View all subcommands and global options
+wormcat --help
+```
+
+### Core Commands
+
+#### 1. Single Gene Set Enrichment Analysis (`enrich`)
+Run Fisher's exact test and generate bubble charts and sunburst diagrams:
+```bash
+wormcat enrich -i path/to/gene_list.csv -o ./results -m fdr_bh -t 0.05
+```
+Add `--no-viz` to run statistical testing without rendering visual charts (useful for headless servers or automated pipelines).
+
+#### 2. Batch Execution (`batch`)
+Process an entire multi-sheet Excel file or a folder of CSV files into an aggregated summary spreadsheet:
+```bash
+# Process multi-sheet Excel file
+wormcat batch -i path/to/experiment.xlsx -o ./batch_output
+
+# Process directory of CSV files
+wormcat batch -i path/to/csv_folder/ -o ./batch_output
+```
+
+#### 3. Pre-ranked GSEA Analysis (`gsea`)
+Run pre-ranked Gene Set Enrichment Analysis directly on DESeq2 differential expression results:
+```bash
+wormcat gsea -i path/to/deseq2_results.csv -o ./gsea_output
+```
+
+#### 4. Export Broad GMT Format (`gmt`)
+Convert WormCat annotation categories into Broad Institute GMT files:
+```bash
+wormcat gmt -o ./gmt_output --prefix wormcat_v2
+```
+
+#### 5. List Available Annotations (`annotations`)
+Inspect built-in and configured annotation CSV datasets:
+```bash
+wormcat annotations list
+```
+
+#### 6. Extract Excel Sheets (`extract`)
+Export sheets from a multi-tab workbook into separate CSV files:
+```bash
+wormcat extract -i path/to/workbook.xlsx -o ./csv_sheets
+```
+
+---
+
+## Quick Start & Usage Examples (Python API)
 
 ### 1. Gene Set Enrichment Analysis & Visualization
 

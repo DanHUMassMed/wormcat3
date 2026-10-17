@@ -26,8 +26,12 @@ dependencies = [
     "plotnine==0.14.5",
     "statsmodels==0.14.4",
     "XlsxWriter==3.2.2",
-    "openpyxl==3.1.5"
+    "openpyxl==3.1.5",
+    "pydantic>=2.7.0"
 ]
+
+[project.scripts]
+wormcat = "wormcat3.cli.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
