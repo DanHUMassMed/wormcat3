@@ -85,7 +85,9 @@ uv pip install wormcat3
 uv pip install jupyterlab
 uv run jupyter lab
 ```
-**Getting Started Notebook**: [start_here.ipynb](https://github.com/DanHUMassMed/wormcat3/blob/main/notebooks/start_here.ipynb).
+**Getting Started Notebooks**:
+- **Python API Walkthrough**: [start_here.ipynb](https://github.com/DanHUMassMed/wormcat3/blob/main/notebooks/start_here.ipynb)
+- **CLI Examples (Bash) Walkthrough**: [cli_examples.ipynb](https://github.com/DanHUMassMed/wormcat3/blob/main/notebooks/cli_examples.ipynb)
 
 ---
 
